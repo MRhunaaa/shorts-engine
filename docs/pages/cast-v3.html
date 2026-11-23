@@ -1,0 +1,256 @@
+<title>Host Lineup</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+<style>
+:root { --bg: #f4f1ec; --ink: #241726; color-scheme: light; }
+body { background: var(--bg); margin: 0; font-family: "Fredoka", system-ui, sans-serif; }
+.sheet { display: grid; grid-template-columns: repeat(5, 360px); gap: 18px; padding: 26px; width: max-content; }
+h1 { font-size: 44px; margin: 22px 26px 0; color: var(--ink); font-weight: 700; }
+canvas { width: 360px; height: 470px; border-radius: 18px; display: block; }
+</style>
+<h1 id="ttl">Host lineup · drawn in code</h1>
+<div class="sheet" id="sheet"></div>
+<script>
+const INK = "#241726", OW = 9;
+const P = (c) => { c.lineJoin = "round"; c.lineCap = "round"; return c; };
+function path(c, fn) { c.beginPath(); fn(); }
+function fillInk(c, fill, w = OW) { if (fill) { c.fillStyle = fill; c.fill(); } if (w) { c.lineWidth = w; c.strokeStyle = INK; c.stroke(); } }
+function E(c, x, y, rx, ry, fill, w = OW, rot = 0) { path(c, () => c.ellipse(x, y, Math.max(1, rx), Math.max(1, ry), rot, 0, Math.PI * 2)); fillInk(c, fill, w); }
+function poly(c, pts, fill, w = OW) { path(c, () => { pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); }); fillInk(c, fill, w); }
+function L(c, pts, w = OW, col = INK) { path(c, () => pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y)))); c.lineWidth = w; c.strokeStyle = col; c.stroke(); }
+function Q(c, a, ctrl, b, w = OW, col = INK) { path(c, () => { c.moveTo(...a); c.quadraticCurveTo(...ctrl, ...b); }); c.lineWidth = w; c.strokeStyle = col; c.stroke(); }
+function hex(h, k) { const n = parseInt(h.slice(1), 16); const f = (v) => Math.max(0, Math.min(255, Math.round(v * k))); return `rgb(${f((n >> 16) & 255)},${f((n >> 8) & 255)},${f(n & 255)})`; }
+/** soft 3-tone fill: light top-left -> base -> shade bottom-right, plus a gentle sheen */
+function shaded(c, x, y, rx, ry, base, rot = 0) {
+  const g = c.createLinearGradient(x - rx, y - ry, x + rx * 0.6, y + ry);
+  g.addColorStop(0, hex(base, 1.12)); g.addColorStop(0.55, base); g.addColorStop(1, hex(base, 0.8));
+  E(c, x, y, rx, ry, g, OW, rot);
+  c.save(); c.globalAlpha = 0.22; E(c, x - rx * 0.35, y - ry * 0.42, rx * 0.32, ry * 0.2, "#ffffff", 0, -0.4); c.restore();
+}
+function shadedPoly(c, pts, base) {
+  const ys = pts.map((p) => p[1]), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const g = c.createLinearGradient(0, y0, 0, y1); g.addColorStop(0, hex(base, 1.1)); g.addColorStop(1, hex(base, 0.82));
+  poly(c, pts, g);
+}
+
+// ---------- faces ----------
+/** eyes: white sclera, pupils, brows. ex: "happy" | "shock" | "smug" */
+function eyes(c, x, y, gap, r, ex, o = {}) {
+  for (const s of [-1, 1]) {
+    const cx = x + s * gap, rr = ex === "shock" ? r * 1.18 : r;
+    E(c, cx, y, rr, rr * 1.12, "#ffffff", 6);
+    const pr = ex === "shock" ? r * 0.3 : r * 0.46, lk = o.look ?? 0;
+    E(c, cx + lk * r * 0.3, y + r * 0.12, pr, pr * 1.1, INK, 0);
+    path(c, () => c.arc(cx + lk * r * 0.3 - pr * 0.35, y - pr * 0.25, pr * 0.32, 0, 7)); c.fillStyle = "#fff"; c.fill();
+    if (ex === "smug") { c.save(); path(c, () => c.ellipse(cx, y, rr, rr * 1.12, 0, 0, 7)); c.clip(); c.fillStyle = o.lid || "#e9dccb"; c.fillRect(cx - rr - 2, y - rr * 1.2, rr * 2 + 4, rr * 1.15); c.restore(); L(c, [[cx - rr, y - 2], [cx + rr, y - 2]], 6); E(c, cx, y, rr, rr * 1.12, null, 6); }
+    const by = y - rr * 1.5;
+    if (ex === "shock") Q(c, [cx - r, by - 2], [cx, by - 16], [cx + r, by - 2], 8);
+    else if (ex === "smug") L(c, [[cx - r, by + (s < 0 ? -10 : 4)], [cx + r, by + (s < 0 ? -2 : 0)]], 8);
+    else Q(c, [cx - r, by + 4], [cx, by - 8], [cx + r, by + 4], 8);
+    if (o.glasses) E(c, cx, y, rr * 1.38, rr * 1.38, null, 6);
+  }
+  if (o.glasses) L(c, [[x - gap + r * 1.38, y - 2], [x + gap - r * 1.38, y - 2]], 6);
+}
+function mouth(c, x, y, ex, w = 30) {
+  if (ex === "shock") { E(c, x, y + 6, w * 0.45, w * 0.6, "#5a1f2e", 7); E(c, x, y + 16, w * 0.3, w * 0.22, "#ff7a8a", 0); }
+  else if (ex === "smug") Q(c, [x - w * 0.6, y + 2], [x + w * 0.1, y + 10], [x + w * 0.75, y - 8], 8);
+  else { path(c, () => { c.moveTo(x - w, y - 4); c.quadraticCurveTo(x, y + w * 1.25, x + w, y - 4); c.closePath(); }); fillInk(c, "#5a1f2e", 7); E(c, x, y + w * 0.5, w * 0.45, w * 0.22, "#ff7a8a", 0); }
+}
+
+// ---------- body ----------
+/** tube limb: ink outline + colour core, joint-rounded */
+function tube(c, pts, w, col) { L(c, pts, w + 9); L(c, pts, w, col); }
+/** mitten hand with a thumb */
+function hand(c, x, y, col, s = 1) { E(c, x, y, 15, 14, col, 6); E(c, x - s * 12, y - 8, 7, 9, col, 5, s * 0.6); }
+/** cartoon body v2: shoulders + waist torso, tube arms with sleeves, trousers, chunky shoes */
+function body(c, o) {
+  const { cx = 180, top = 250, shirt, pants = "#3b3f52", shoes = INK, arm = "hang", prop, tail, skin = "#f5c9a0" } = o;
+  const sw = 74, ww = 56, h = 116; // half shoulder width, half waist width, torso height
+  if (tail) tail(c);
+  // legs + shoes
+  for (const s of [-1, 1]) {
+    tube(c, [[cx + s * 24, top + h - 6], [cx + s * 28, top + h + 64]], 26, pants);
+    path(c, () => { c.moveTo(cx + s * 12, top + h + 62); c.quadraticCurveTo(cx + s * 12, top + h + 84, cx + s * 30, top + h + 86); c.quadraticCurveTo(cx + s * 64, top + h + 88, cx + s * 58, top + h + 70); c.quadraticCurveTo(cx + s * 50, top + h + 58, cx + s * 30, top + h + 60); c.closePath(); }); fillInk(c, shoes, 7);
+    L(c, [[cx + s * 18, top + h + 80], [cx + s * 56, top + h + 80]], 5, "rgba(255,255,255,0.55)");
+  }
+  // hips / trousers top
+  path(c, () => c.roundRect(cx - ww - 2, top + h - 30, (ww + 2) * 2, 44, 16)); fillInk(c, pants, 8);
+  const sh = (s) => [cx + s * (sw - 10), top + 22];
+  const hang = (s) => [sh(s), [cx + s * (sw + 12), top + 64], [cx + s * (sw + 4), top + 108]];
+  const POSES = {
+    hang,
+    wave: (s) => (s > 0 ? [sh(s), [cx + sw + 30, top - 2], [cx + sw + 20, top - 58]] : hang(s)),
+    hold: (s) => (s > 0 ? [sh(s), [cx + sw + 22, top + 58], [cx + sw - 18, top + 72]] : hang(s)),
+    hips: (s) => [sh(s), [cx + s * (sw + 34), top + 52], [cx + s * (ww + 6), top + 86]],
+  };
+  const A = POSES[arm] || hang;
+  // arms (behind torso edges): sleeve on the upper arm + forearm, mitten hand
+  for (const s of [-1, 1]) { const p = A(s); tube(c, [p[0], p[1]], 26, o.sleeve || shirt); tube(c, [p[1], p[2]], 22, hex(o.sleeve || shirt, 0.92)); L(c, [p[1], p[1]], 30, INK); L(c, [p[1], p[1]], 21, hex(o.sleeve || shirt, 0.96)); hand(c, p[2][0], p[2][1], skin, s); }
+  // torso: rounded trapezoid with gradient + sheen
+  const T = [[cx - sw, top + 8], [cx + sw, top + 8], [cx + ww + 4, top + h], [cx - ww - 4, top + h]];
+  path(c, () => { c.moveTo(cx - sw + 22, top); c.lineTo(cx + sw - 22, top); c.quadraticCurveTo(cx + sw + 4, top, cx + sw, top + 30); c.lineTo(cx + ww + 6, top + h - 12); c.quadraticCurveTo(cx + ww + 6, top + h, cx + ww - 8, top + h); c.lineTo(cx - ww + 8, top + h); c.quadraticCurveTo(cx - ww - 6, top + h, cx - ww - 6, top + h - 12); c.lineTo(cx - sw, top + 30); c.quadraticCurveTo(cx - sw - 4, top, cx - sw + 22, top); c.closePath(); });
+  const g = c.createLinearGradient(cx - sw, top, cx + sw * 0.7, top + h); g.addColorStop(0, hex(shirt, 1.12)); g.addColorStop(0.6, shirt); g.addColorStop(1, hex(shirt, 0.82));
+  c.save(); c.fillStyle = g; c.fill(); c.clip();
+  c.globalAlpha = 0.18; E(c, cx - sw * 0.45, top + h * 0.3, 22, 40, "#ffffff", 0, -0.25); c.globalAlpha = 1;
+  if (o.decor) o.decor(c, cx, top, sw * 2, h);
+  c.restore();
+  c.lineWidth = OW; c.strokeStyle = INK; c.stroke();
+  void T;
+  if (prop) prop(c, A(1)[2]);
+}
+function bodyOld(c, o) {
+  const { cx = 180, top = 248, shirt, pants = "#3b3f52", shoes = INK, arm = "hang", prop, tail } = o;
+  const w = 118, h = 120;
+  if (tail) tail(c);
+  for (const s of [-1, 1]) { L(c, [[cx + s * 22, top + h - 14], [cx + s * 26, top + h + 66]], 13); L(c, [[cx + s * 22, top + h - 14], [cx + s * 26, top + h + 66]], 6, hex(pants, 1)); E(c, cx + s * 34, top + h + 72, 19, 10, shoes, 6); }
+  const sh = (s) => [cx + s * w * 0.4, top + 26];
+  const hang = (s) => [sh(s), [cx + s * w * 0.62, top + 64], [cx + s * w * 0.6, top + 108]];
+  const POSES = {
+    hang,
+    wave: (s) => (s > 0 ? [sh(s), [cx + w * 0.74, top - 4], [cx + w * 0.62, top - 56]] : hang(s)),
+    hold: (s) => (s > 0 ? [sh(s), [cx + w * 0.7, top + 60], [cx + w * 0.42, top + 72]] : hang(s)),
+    hips: (s) => [sh(s), [cx + s * w * 0.8, top + 48], [cx + s * w * 0.44, top + 86]],
+  };
+  const A = POSES[arm] || hang;
+  for (const s of [-1, 1]) { const p = A(s); L(c, p, 14); L(c, p, 7, hex(o.sleeve || shirt, 0.92)); path(c, () => c.arc(p[2][0], p[2][1], 9, 0, 7)); c.fillStyle = INK; c.fill(); }
+  shaded(c, cx, top + h * 0.5, w * 0.5, h * 0.54, shirt);
+  if (o.decor) { c.save(); path(c, () => c.ellipse(cx, top + h * 0.5, w * 0.5, h * 0.54, 0, 0, 7)); c.clip(); o.decor(c, cx, top, w, h); c.restore(); E(c, cx, top + h * 0.5, w * 0.5, h * 0.54, null, OW); }
+  if (prop) prop(c, A(1)[2]);
+}
+
+// ---------- card frame ----------
+function card(c, bg1, bg2) {
+  const g = c.createLinearGradient(0, 0, 0, 470); g.addColorStop(0, bg1); g.addColorStop(1, bg2); c.fillStyle = g; c.fillRect(0, 0, 360, 470);
+  const r = c.createRadialGradient(150, 150, 10, 150, 190, 260); r.addColorStop(0, "rgba(255,255,255,0.55)"); r.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = r; c.fillRect(0, 0, 360, 470);
+  E(c, 150, 448, 86, 11, "rgba(36,23,38,0.16)", 0);
+}
+function label(c, name, line) {
+  c.fillStyle = INK; c.font = "700 30px Fredoka"; c.textAlign = "left"; c.fillText(name, 18, 40);
+  c.font = "500 15px Fredoka"; c.fillStyle = "rgba(36,23,38,0.62)"; c.fillText(line, 18, 62);
+}
+/** draw the head small for an expression chip */
+function chip(c, x, y, s, head, ex, bg) {
+  c.save(); E(c, x, y, 34, 34, bg, 4); path(c, () => c.arc(x, y, 32, 0, 7)); c.clip();
+  c.translate(x, y); c.scale(s, s); c.translate(-150, -170); head(c, ex); c.restore();
+}
+
+// ---------- the ten heads (drawn around x=150, y=170) ----------
+const H = {
+  oyen(c, ex) {
+    for (const s of [-1, 1]) { poly(c, [[150 + s * 34, 98], [150 + s * 92, 46], [150 + s * 92, 120]], "#f08a2c"); poly(c, [[150 + s * 50, 100], [150 + s * 82, 66], [150 + s * 82, 112]], "#ffc7b8", 0); }
+    shaded(c, 150, 168, 100, 86, "#f39a3a");
+    for (const x of [126, 150, 174]) L(c, [[x, 86], [x + 3, 108]], 7, "#c8621c");
+    E(c, 132, 206, 34, 24, "#fff4e6", 0); E(c, 168, 206, 34, 24, "#fff4e6", 0);
+    eyes(c, 150, 158, 38, 21, ex, { lid: "#f39a3a" });
+    poly(c, [[142, 192], [158, 192], [150, 201]], "#ff7a9a", 5); mouth(c, 150, 210, ex, 18);
+    for (const s of [-1, 1]) for (const d of [-6, 6]) L(c, [[150 + s * 46, 204 + d], [150 + s * 92, 198 + d * 1.6]], 3);
+  },
+  embek(c, ex) {
+    for (const s of [-1, 1]) { Q(c, [150 + s * 40, 102], [150 + s * 98, 34], [150 + s * 120, 86], 20); Q(c, [150 + s * 40, 102], [150 + s * 98, 34], [150 + s * 120, 86], 11, "#d8c39a"); E(c, 150 + s * 96, 150, 34, 13, "#f3ece2", 6, s * 0.45); }
+    shaded(c, 150, 162, 80, 90, "#f7f3ee");
+    E(c, 150, 214, 46, 30, "#ece2d6", 6); E(c, 138, 210, 5, 4, INK, 0); E(c, 162, 210, 5, 4, INK, 0);
+    eyes(c, 150, 150, 32, 17, ex, { glasses: true, lid: "#f7f3ee" }); mouth(c, 150, 228, ex, 14);
+    poly(c, [[136, 244], [164, 244], [150, 286]], "#b9ad9c", 6);
+  },
+  dino(c, ex) {
+    for (let k = 0; k < 5; k++) { const a = Math.PI * (1.2 + k * 0.15); poly(c, [[150 + 92 * Math.cos(a) - 13, 172 + 78 * Math.sin(a)], [150 + 120 * Math.cos(a), 172 + 106 * Math.sin(a)], [150 + 92 * Math.cos(a) + 13, 172 + 78 * Math.sin(a)]], "#ff8a3c", 6); }
+    shaded(c, 150, 172, 98, 84, "#5cc46a"); E(c, 150, 212, 80, 42, "#8fe39a", 6);
+    E(c, 134, 198, 5, 4, "#2e7a3a", 0); E(c, 166, 198, 5, 4, "#2e7a3a", 0);
+    eyes(c, 150, 156, 36, 21, ex, { lid: "#5cc46a" }); mouth(c, 150, 222, ex, 22);
+    poly(c, [[72, 112], [228, 112], [210, 70], [90, 70]], "#e8622c"); E(c, 150, 112, 96, 15, "#c94e1f", 7); L(c, [[100, 96], [200, 96]], 4, "#ffd37a");
+  },
+  koko(c, ex) {
+    for (let k = 0; k < 3; k++) E(c, 128 + k * 22, 86 - (k === 1 ? 10 : 0), 17, 22, "#e8322c", 6);
+    shaded(c, 150, 166, 80, 86, "#fbf8f2");
+    eyes(c, 150, 152, 30, 18, ex, { lid: "#fbf8f2" });
+    if (ex === "shock") { poly(c, [[130, 192], [170, 192], [150, 214]], "#ffb02e", 6); poly(c, [[134, 216], [166, 216], [150, 236]], "#ffb02e", 6); } else poly(c, [[128, 192], [172, 192], [150, 224]], "#ffb02e", 6);
+    E(c, 150, 244, 12, 18, "#e8322c", 6);
+  },
+  bolt(c, ex) {
+    L(c, [[150, 76], [150, 48]], 7); E(c, 150, 44, 10, 10, "#ff5a3c", 5);
+    const g = c.createLinearGradient(0, 84, 0, 246); g.addColorStop(0, "#efe6d2"); g.addColorStop(1, "#cbbf a5".replace(" ", "")); poly(c, [[66, 86], [234, 86], [240, 244], [60, 244]], g);
+    poly(c, [[84, 104], [204, 104], [208, 228], [80, 228]], "#123a2e", 6);
+    const gl = c.createRadialGradient(144, 166, 4, 144, 166, 90); gl.addColorStop(0, "rgba(124,252,180,0.45)"); gl.addColorStop(1, "rgba(124,252,180,0)"); c.fillStyle = gl; c.fillRect(80, 104, 128, 124);
+    c.fillStyle = "#86ffbe"; const px = (x, y, w, h) => c.fillRect(x, y, w, h);
+    if (ex === "shock") { px(110, 136, 18, 18); px(160, 136, 18, 18); px(134, 182, 20, 24); }
+    else if (ex === "smug") { px(106, 146, 26, 8); px(156, 140, 26, 8); px(124, 190, 44, 8); px(168, 182, 8, 8); }
+    else { px(112, 132, 14, 26); px(162, 132, 14, 26); px(118, 186, 52, 8); px(110, 178, 8, 8); px(170, 178, 8, 8); }
+    c.fillStyle = "rgba(124,252,180,0.08)"; for (let y = 106; y < 226; y += 6) c.fillRect(82, y, 124, 2);
+    for (const y of [130, 160]) E(c, 222, y, 7, 7, "#9aa2b0", 4);
+  },
+  kapi(c, ex) {
+    E(c, 96, 104, 15, 11, "#8a6440", 6); E(c, 204, 104, 15, 11, "#8a6440", 6);
+    path(c, () => c.roundRect(58, 96, 184, 148, 70)); const g = c.createLinearGradient(58, 96, 242, 244); g.addColorStop(0, "#c99a6a"); g.addColorStop(1, "#946a43"); fillInk(c, g);
+    path(c, () => c.roundRect(84, 168, 132, 74, 36)); fillInk(c, "#7a5536", 6); E(c, 132, 190, 6, 5, INK, 0); E(c, 168, 190, 6, 5, INK, 0);
+    eyes(c, 150, 144, 40, 13, ex === "happy" ? "smug" : ex, { lid: "#b08154" }); mouth(c, 150, 218, ex === "happy" ? "smug" : ex, 16);
+    E(c, 150, 88, 24, 22, "#ff9a2e", 6); L(c, [[150, 66], [160, 56]], 5, "#3e9a4c");
+  },
+  hoot(c, ex) {
+    for (const s of [-1, 1]) poly(c, [[150 + s * 38, 96], [150 + s * 82, 56], [150 + s * 76, 116]], "#7a5a3a");
+    shaded(c, 150, 170, 98, 90, "#9a7650"); path(c, () => { c.moveTo(150, 120); c.bezierCurveTo(70, 70, 50, 220, 150, 250); c.bezierCurveTo(250, 220, 230, 70, 150, 120); }); fillInk(c, "#f0e1c4", 6);
+    eyes(c, 150, 166, 36, 22, ex, { lid: "#f0e1c4" }); E(c, 186, 166, 30, 30, null, 5); L(c, [[214, 172], [228, 236]], 3, "#e8b73a");
+    poly(c, [[140, 192], [160, 192], [150, 214]], "#ffb02e", 5); if (ex !== "smug") mouth(c, 150, 226, ex, 12);
+  },
+  zib(c, ex) {
+    for (const s of [-1, 1]) { L(c, [[150 + s * 30, 92], [150 + s * 54, 46]], 6); E(c, 150 + s * 56, 42, 10, 10, "#9affb4", 5); }
+    shaded(c, 150, 170, 88, 96, "#7ee8a2");
+    for (const s of [-1, 1]) E(c, 150 + s * 36, 170, 30, ex === "shock" ? 44 : 38, INK, 5, s * 0.35);
+    for (const s of [-1, 1]) E(c, 150 + s * 30, 152, 8, 10, "#ffffff", 0);
+    if (ex === "smug") for (const s of [-1, 1]) { c.save(); c.fillStyle = "#7ee8a2"; c.fillRect(150 + s * 36 - 32, 128, 64, 22); c.restore(); }
+    mouth(c, 150, 226, ex, 14);
+  },
+  momo(c, ex) {
+    for (const s of [-1, 1]) E(c, 150 + s * 94, 168, 40, 54, "#8a5a3a", 7);
+    shaded(c, 150, 160, 90, 86, "#a87048"); for (let k = 0; k < 5; k++) Q(c, [120 + k * 15, 82], [126 + k * 15, 66], [134 + k * 15, 80], 6, "#6b4a2f");
+    eyes(c, 150, 154, 32, 18, ex, { lid: "#a87048" });
+    for (const s of [-1, 1]) { Q(c, [150 + s * 30, 214], [150 + s * 66, 250], [150 + s * 40, 276], 15); Q(c, [150 + s * 30, 214], [150 + s * 66, 250], [150 + s * 40, 276], 8, "#fff6e0"); }
+    Q(c, [150, 196], [146, 256], [186, 280], 28); Q(c, [150, 196], [146, 256], [186, 280], 19, "#9a6640");
+  },
+  shark(c, ex) {
+    poly(c, [[150, 54], [188, 108], [114, 108]], "#4f8ac8");
+    shaded(c, 150, 170, 104, 84, "#6aa6e0"); path(c, () => { c.moveTo(66, 190); c.quadraticCurveTo(150, 280, 234, 190); c.quadraticCurveTo(150, 226, 66, 190); }); fillInk(c, "#f2f7fb", 6);
+    for (let k = 0; k < 7; k++) poly(c, [[96 + k * 18, 200 + Math.abs(3 - k) * 2], [105 + k * 18, 218], [114 + k * 18, 200 + Math.abs(3 - k) * 2]], "#ffffff", 3);
+    eyes(c, 150, 150, 44, 16, ex === "happy" ? "smug" : ex, { lid: "#6aa6e0" });
+    path(c, () => c.roundRect(86, 102, 128, 28, 10)); fillInk(c, "#1d1626", 5); E(c, 116, 116, 22, 11, "#2a2a3a", 4); E(c, 184, 116, 22, 11, "#2a2a3a", 4);
+  },
+};
+
+// ---------- the ten characters ----------
+const CAST = [
+  { key: "oyen", name: "1 · Oyen", line: "chaotic orange cat · \"humans did WHAT?\"", bg: ["#ffe9d2", "#ffd9b5"], chipBg: "#fff3e4",
+    body: (c) => body(c, { skin: "#f39a3a", shirt: "#2f3f6e", pants: "#1f2a44", shoes: "#f4f1ea", arm: "hips", decor: (c, cx, t, w, h) => { c.fillStyle = "#ffb85c"; c.font = "700 30px Fredoka"; c.textAlign = "center"; c.fillText("?!", cx, t + h * 0.5); L(c, [[cx - 14, t + 4], [cx - 16, t + 36]], 4, "#d8dce8"); L(c, [[cx + 14, t + 4], [cx + 16, t + 36]], 4, "#d8dce8"); path(c, () => c.roundRect(cx - 44, t + h * 0.66, 88, 30, 10)); fillInk(c, "#26355e", 5); E(c, cx, t - 2, 46, 16, "#26355e", 6); } }) },
+  { key: "embek", name: "2 · Prof. Embek", line: "goat professor · \"Mbeeek! WRONG.\"", bg: ["#e7eef8", "#d4e0f2"], chipBg: "#f2f6fc",
+    body: (c) => body(c, { skin: "#f7f3ee", shirt: "#f4f5f7", pants: "#6b4a2f", shoes: "#5a3b22", arm: "hold", sleeve: "#e8e9ee", decor: (c, cx, t, w, h) => { poly(c, [[cx - 30, t], [cx, t + 70], [cx - 50, t + 40]], "#e3e5ea", 5); poly(c, [[cx + 30, t], [cx, t + 70], [cx + 50, t + 40]], "#e3e5ea", 5); poly(c, [[cx - 14, t + 2], [cx + 14, t + 2], [cx, t + 40]], "#e0b44a", 4); poly(c, [[cx - 22, t + 6], [cx, t + 18], [cx + 22, t + 6], [cx + 22, t + 28], [cx, t + 18], [cx - 22, t + 28]], "#d23b3b", 4); L(c, [[cx, t + 70], [cx, t + h]], 4, "#c9ccd6"); L(c, [[cx + 26, t + 44], [cx + 34, t + 70]], 5, "#2f7fd0"); }, prop: (c, [x, y]) => { L(c, [[x, y], [x + 60, y - 70]], 7, "#8a5a34"); E(c, x + 62, y - 72, 5, 5, "#ffffff", 3); } }) },
+  { key: "dino", name: "3 · Dino Topi", line: "green dino · bucket hat · time traveller", bg: ["#e2f5e4", "#cdebd2"], chipBg: "#f0faf1",
+    body: (c) => body(c, { skin: "#5cc46a", shirt: "#f6c43c", pants: "#57c065", shoes: "#3e9a4c", arm: "wave", tail: (c) => { poly(c, [[210, 352], [300, 368], [326, 316], [296, 330], [220, 330]], "#57c065"); } }) },
+  { key: "koko", name: "4 · Kapten Koko", line: "rooster detective · \"Case closed!\"", bg: ["#f6ead8", "#ecd8bb"], chipBg: "#fbf3e6",
+    body: (c) => body(c, { skin: "#fbf8f2", shirt: "#c49a62", pants: "#3b3f52", arm: "hold", decor: (c, cx, t, w, h) => { L(c, [[cx - 50, t + h * 0.58], [cx + 50, t + h * 0.58]], 10, "#7a5a32"); poly(c, [[cx - 7, t + h * 0.52], [cx + 7, t + h * 0.52], [cx + 7, t + h * 0.64], [cx - 7, t + h * 0.64]], "#e8c45a", 3); L(c, [[cx - 4, t + 4], [cx - 14, t + h]], 4, "#8a6a3a"); poly(c, [[cx - 40, t - 4], [cx - 6, t + 50], [cx - 54, t + 30]], "#b38a52", 5); poly(c, [[cx + 40, t - 4], [cx + 6, t + 50], [cx + 54, t + 30]], "#b38a52", 5); }, prop: (c, [x, y]) => { L(c, [[x, y], [x + 22, y - 24]], 8, "#6b4a2a"); E(c, x + 36, y - 38, 20, 20, "rgba(190,230,255,0.55)", 7); } }) },
+  { key: "bolt", name: "5 · Bolt", line: "retro robot · screen face · \"ERROR: humans\"", bg: ["#e4eceb", "#cfdcda"], chipBg: "#eff5f4",
+    body: (c) => body(c, { skin: "#9aa2b0", shirt: "#c3c9d3", pants: "#7d8592", shoes: "#4a4f5a", arm: "wave", decor: (c, cx, t, w, h) => { E(c, cx, t + h * 0.42, 16, 16, "#ff6a3c", 5); for (let k = 0; k < 3; k++) L(c, [[cx - 28, t + h * 0.72 + k * 9], [cx + 28, t + h * 0.72 + k * 9]], 4, "#8a909c"); } }) },
+  { key: "kapi", name: "6 · Kapi", line: "deadpan capybara · \"...anyway.\"", bg: ["#e3f3ee", "#cde8df"], chipBg: "#f0f9f6",
+    body: (c) => body(c, { skin: "#b08154", shirt: "#a8dccb", pants: "#7a5536", shoes: "#8a5a34", arm: "hold", decor: (c, cx, t, w, h) => { L(c, [[cx - 30, t + 4], [cx + 20, t + h]], 6, "#7fbfaa"); L(c, [[cx - 54, t + h * 0.6], [cx + 54, t + h * 0.6]], 9, "#5f9e8a"); }, prop: (c, [x, y]) => { poly(c, [[x - 4, y - 26], [x + 30, y - 26], [x + 26, y + 4], [x, y + 4]], "#ffffff", 6); Q(c, [x + 6, y - 32], [x + 2, y - 46], [x + 12, y - 58], 3, "#c9ccd6"); } }) },
+  { key: "hoot", name: "7 · Mbah Hoot", line: "owl grandpa historian · monocle", bg: ["#efe6f2", "#e0d2e6"], chipBg: "#f7f2f9",
+    body: (c) => body(c, { skin: "#9a7650", shirt: "#7a4a6e", pants: "#5a4632", shoes: "#4a3a2a", arm: "hold", decor: (c, cx, t, w, h) => { for (let k = 0; k < 4; k++) E(c, cx, t + 26 + k * 24, 5, 5, "#e8c45a", 3); L(c, [[cx - 30, t + 4], [cx - 6, t + h]], 4, "#5e3654"); }, prop: (c, [x, y]) => { poly(c, [[x - 30, y - 30], [x + 18, y - 30], [x + 18, y + 10], [x - 30, y + 10]], "#8a3a2a", 6); L(c, [[x - 6, y - 30], [x - 6, y + 10]], 4, "#e8c45a"); } }) },
+  { key: "zib", name: "8 · Zibzib", line: "alien tourist · camera · \"Explain THIS.\"", bg: ["#e6e2f8", "#d4cdf0"], chipBg: "#f2f0fc",
+    body: (c) => body(c, { skin: "#7ee8a2", shirt: "#5a3fa8", pants: "#b8a27a", shoes: "#8a5a34", arm: "hold", decor: (c, cx, t, w, h) => { for (let k = 0; k < 8; k++) E(c, cx - 44 + (k % 4) * 28, t + 24 + Math.floor(k / 4) * 46 + (k % 2) * 8, 7, 7, ["#ffb85c", "#7cfc9a", "#ff7a9a", "#6ab8ff"][k % 4], 0); } , prop: (c, [x, y]) => { poly(c, [[x - 26, y - 22], [x + 22, y - 22], [x + 22, y + 10], [x - 26, y + 10]], "#2a2a33", 6); E(c, x - 2, y - 6, 10, 10, "#6ab8ff", 4); } }) },
+  { key: "momo", name: "9 · Momo", line: "baby mammoth · thawed out in 2026", bg: ["#f6e5dc", "#ecd2c4"], chipBg: "#fbf1ec",
+    body: (c) => body(c, { skin: "#a87048", shirt: "#c4453a", pants: "#6b4a2f", shoes: "#5a3b22", arm: "wave", decor: (c, cx, t, w) => { L(c, [[cx - w * 0.48, t + 14], [cx + w * 0.48, t + 20]], 18, "#2f6fb5"); for (const x of [-30, 0, 30]) L(c, [[cx + x, t + 8], [cx + x, t + 26]], 4, "#f4f1ea"); L(c, [[cx + 28, t + 22], [cx + 36, t + 80]], 16, "#2f6fb5"); } }) },
+  { key: "shark", name: "10 · Sandalini Hiuto", line: "our brainrot shark · flip-flops", bg: ["#dff1f8", "#c6e5f2"], chipBg: "#eef8fc",
+    body: (c) => body(c, { skin: "#6aa6e0", shirt: "#3ab0b0", pants: "#f08a3c", shoes: "#2f7fd0", arm: "wave", decor: (c, cx, t) => { for (let k = 0; k < 5; k++) E(c, cx - 36 + k * 18, t + 36 + (k % 2) * 34, 8, 8, "#ffd23c", 0); } }) },
+];
+
+function draw(ch) {
+  const cv = document.createElement("canvas"); cv.width = 720; cv.height = 940; const c = P(cv.getContext("2d")); c.scale(2, 2);
+  card(c, ch.bg[0], ch.bg[1]);
+  c.save(); c.translate(-30, 50); c.translate(150, 0); c.scale(0.9, 0.9); c.translate(-150, 0);
+  ch.body(c); H[ch.key](c, "happy"); c.restore();
+  ["happy", "shock", "smug"].forEach((ex, i) => chip(c, 318, 150 + i * 84, 0.36, H[ch.key], ex, ch.chipBg));
+  c.fillStyle = "rgba(36,23,38,0.55)"; c.font = "500 11px Fredoka"; c.textAlign = "center"; ["happy", "shocked", "smug"].forEach((t, i) => c.fillText(t, 318, 198 + i * 84));
+  label(c, ch.name, ch.line);
+  return cv;
+}
+const sheet = document.getElementById("sheet");
+const which = (location.hash || "#all").slice(1);
+document.fonts.ready.then(() => CAST.forEach((ch, i) => { if (which === "a" && i > 4) return; if (which === "b" && i < 5) return; sheet.appendChild(draw(ch)); }));
+if (which === "a") document.getElementById("ttl").textContent = "Host lineup · 1-5 · drawn in code";
+if (which === "b") document.getElementById("ttl").textContent = "Host lineup · 6-10 · drawn in code";
+</script>
