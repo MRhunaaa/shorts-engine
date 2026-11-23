@@ -1,0 +1,304 @@
+<title>Detailed Rig Cast</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+<style>
+:root { --bg: #efe9df; --ink: #1a1418; color-scheme: light; }
+body { background: var(--bg); margin: 0; font-family: "Fredoka", system-ui, sans-serif; }
+h1 { font-size: 40px; margin: 22px 26px 0; color: var(--ink); font-weight: 700; }
+.sheet { display: grid; grid-template-columns: repeat(3, 460px); gap: 18px; padding: 22px 26px; width: max-content; }
+canvas { width: 460px; height: 700px; border-radius: 20px; display: block; }
+</style>
+<h1 id="ttl">Detailed outfits · same rig</h1>
+<div class="sheet" id="sheet"></div>
+<script>
+// Same rig as the user's sketch (circle head, tall rounded body, stick limbs), reference-video look, now with heavy outfit detail:
+// fabric weave, folds, double stitching, pockets, holed buttons, engraved metal, fur tufts, beard strands, cast shadows, rim light.
+const INK = "#1a1418", OW = 7, HEAD = "#f7f1e8";
+const P = (c) => { c.lineJoin = "round"; c.lineCap = "round"; return c; };
+function E(c, x, y, rx, ry, fill, w = OW, rot = 0) { c.beginPath(); c.ellipse(x, y, Math.max(0.5, rx), Math.max(0.5, ry), rot, 0, Math.PI * 2); if (fill) { c.fillStyle = fill; c.fill(); } if (w) { c.lineWidth = w; c.strokeStyle = INK; c.stroke(); } }
+function poly(c, pts, fill, w = OW) { c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); if (fill) { c.fillStyle = fill; c.fill(); } if (w) { c.lineWidth = w; c.strokeStyle = INK; c.stroke(); } }
+function L(c, pts, w = OW, col = INK, dash) { c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.lineWidth = w; c.strokeStyle = col; c.setLineDash(dash || []); c.stroke(); c.setLineDash([]); }
+function Q(c, a, k, b, w = OW, col = INK, dash) { c.beginPath(); c.moveTo(...a); c.quadraticCurveTo(...k, ...b); c.lineWidth = w; c.strokeStyle = col; c.setLineDash(dash || []); c.stroke(); c.setLineDash([]); }
+function hex(h, k) { const n = parseInt(h.slice(1), 16); const f = (v) => Math.max(0, Math.min(255, Math.round(v * k))); return `rgb(${f((n >> 16) & 255)},${f((n >> 8) & 255)},${f(n & 255)})`; }
+function rr(c, x, y, w, h, r) { c.beginPath(); c.roundRect(x, y, w, h, r); }
+function vgrad(c, y0, y1, base) { const g = c.createLinearGradient(0, y0, 0, y1); g.addColorStop(0, hex(base, 1.12)); g.addColorStop(0.55, base); g.addColorStop(1, hex(base, 0.76)); return g; }
+const rnd = (s) => { let x = s; return () => (x = (x * 16807) % 2147483647) / 2147483647; };
+
+// ---------- detail helpers ----------
+/** fine diagonal weave inside the current clip */
+function weave(c, x0, y0, w, h, col = "rgba(0,0,0,0.07)", step = 6) { c.save(); c.strokeStyle = col; c.lineWidth = 1.2; for (let k = -h; k < w; k += step) { c.beginPath(); c.moveTo(x0 + k, y0); c.lineTo(x0 + k + h, y0 + h); c.stroke(); } c.restore(); }
+/** soft fold: dark curve + light curve beside it */
+function fold(c, a, k, b, dark = "rgba(0,0,0,0.22)", light = "rgba(255,255,255,0.28)") { Q(c, a, k, b, 3, dark); Q(c, [a[0] + 3, a[1]], [k[0] + 3, k[1]], [b[0] + 3, b[1]], 2, light); }
+const stitch = (c, pts, col = "rgba(255,255,255,0.55)") => L(c, pts, 1.8, col, [4, 4]);
+function stitchQ(c, a, k, b, col = "rgba(255,255,255,0.55)") { Q(c, a, k, b, 1.8, col, [4, 4]); }
+/** 4-hole button */
+function button(c, x, y, col = "#e8c45a", r = 5.5) { E(c, x, y, r, r, col, 2.5); for (const [dx, dy] of [[-1.6, -1.6], [1.6, -1.6], [-1.6, 1.6], [1.6, 1.6]]) E(c, x + dx, y + dy, 0.9, 0.9, INK, 0); E(c, x - r * 0.35, y - r * 0.4, r * 0.25, r * 0.18, "rgba(255,255,255,0.7)", 0); }
+/** metal plate with bevel + engraving lines */
+function metal(c, x, y, w, h, base = "#d9b44a") { rr(c, x, y, w, h, 4); const g = c.createLinearGradient(x, y, x, y + h); g.addColorStop(0, hex(base, 1.25)); g.addColorStop(0.5, base); g.addColorStop(1, hex(base, 0.7)); c.fillStyle = g; c.fill(); c.lineWidth = 3; c.strokeStyle = INK; c.stroke(); rr(c, x + 3, y + 3, w - 6, h - 6, 2); c.lineWidth = 1.2; c.strokeStyle = "rgba(0,0,0,0.35)"; c.stroke(); L(c, [[x + 5, y + 4], [x + w * 0.45, y + 4]], 1.5, "rgba(255,255,255,0.8)"); }
+/** fluffy fur band along a horizontal span */
+function furBand(c, x0, x1, y, h, col = "#f6f3ee") { const r = rnd(Math.round(x0 * 7 + y)); c.beginPath(); c.moveTo(x0, y + h / 2); for (let x = x0; x <= x1; x += 9) c.quadraticCurveTo(x + 4.5, y - 4 - r() * 4, x + 9, y + (r() - 0.5) * 3); for (let x = x1; x >= x0; x -= 9) c.quadraticCurveTo(x - 4.5, y + h + 4 + r() * 4, x - 9, y + h + (r() - 0.5) * 3); c.closePath(); const g = c.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, "#ffffff"); g.addColorStop(1, hex(col, 0.85)); c.fillStyle = g; c.fill(); c.lineWidth = 4; c.strokeStyle = INK; c.stroke(); for (let k = 0; k < (x1 - x0) / 7; k++) { const x = x0 + 4 + r() * (x1 - x0 - 8), yy = y + 3 + r() * (h - 6); Q(c, [x, yy], [x + 2, yy - 3], [x + 4, yy], 1.3, "rgba(0,0,0,0.18)"); } }
+/** pocket with flap and stitching */
+function pocket(c, x, y, w, h, col) { rr(c, x, y, w, h, 4); c.fillStyle = hex(col, 0.95); c.fill(); c.lineWidth = 3; c.strokeStyle = INK; c.stroke(); stitch(c, [[x + 3, y + 4], [x + 3, y + h - 3], [x + w - 3, y + h - 3], [x + w - 3, y + 4]], "rgba(0,0,0,0.25)"); poly(c, [[x - 2, y - 2], [x + w + 2, y - 2], [x + w + 2, y + 9], [x + w / 2, y + 14], [x - 2, y + 9]], hex(col, 1.05), 3); }
+/** rim light on the right edge + soft AO on the left of a rounded rect */
+function bodyLight(c, x, y, w, h) { const g = c.createLinearGradient(x, 0, x + w, 0); g.addColorStop(0, "rgba(255,255,255,0.20)"); g.addColorStop(0.3, "rgba(255,255,255,0)"); g.addColorStop(0.75, "rgba(0,0,0,0)"); g.addColorStop(0.93, "rgba(0,0,0,0.22)"); g.addColorStop(1, "rgba(150,200,255,0.35)"); c.fillStyle = g; c.fillRect(x, y, w, h); }
+
+// ---------- rig ----------
+const CX = 230, HY = 210, HR = 92;
+const BW = 136, BH = 200, BX = CX - BW / 2, BY = 296, BR = 44;
+const LEG_Y0 = BY + BH - 8, LEG_Y1 = 640;
+function legs(c, col, shoe = INK, stripes) {
+  for (const s of [-1, 1]) {
+    const a = [CX + s * 28, LEG_Y0], b = [CX + s * 31, LEG_Y1];
+    L(c, [a, b], 9); if (col) L(c, [a, b], 5, col);
+    if (stripes) for (let k = 0; k < 6; k++) L(c, [[a[0] + (b[0] - a[0]) * (k / 6 + 0.04), a[1] + (b[1] - a[1]) * (k / 6 + 0.04)], [a[0] + (b[0] - a[0]) * (k / 6 + 0.1), a[1] + (b[1] - a[1]) * (k / 6 + 0.1)]], 5, stripes);
+    // shoe: rounded toe, sole, lace dots, shine
+    c.beginPath(); c.moveTo(b[0] - s * 8, b[1] - 8); c.quadraticCurveTo(b[0] + s * 34, b[1] - 12, b[0] + s * 30, b[1] + 6); c.quadraticCurveTo(b[0] + s * 6, b[1] + 12, b[0] - s * 12, b[1] + 6); c.closePath();
+    c.fillStyle = shoe; c.fill(); c.lineWidth = 5; c.strokeStyle = INK; c.stroke();
+    L(c, [[b[0] - s * 12, b[1] + 5], [b[0] + s * 28, b[1] + 5]], 3, "rgba(255,255,255,0.25)");
+    E(c, b[0] + s * 16, b[1] - 6, 5, 2.5, "rgba(255,255,255,0.45)", 0);
+  }
+}
+function arms(c, pose = "hang", sleeve) {
+  for (const s of [-1, 1]) {
+    const sh = [CX + s * 62, BY + 40];
+    const pts = pose === "hips" ? [sh, [CX + s * 108, BY + 84], [CX + s * 72, BY + 120]] : [sh, [CX + s * 92, BY + 94], [CX + s * 94, BY + 156]];
+    L(c, pts, 8); if (sleeve) { L(c, [pts[0], pts[1]], 4, sleeve); }
+    E(c, pts[2][0], pts[2][1], 11, 11, INK, 0); E(c, pts[2][0] - 3, pts[2][1] - 3, 3.5, 3.5, "rgba(255,255,255,0.55)", 0);
+  }
+}
+function bodyShape(c, base, details) {
+  rr(c, BX, BY, BW, BH, BR); c.fillStyle = vgrad(c, BY, BY + BH, base); c.fill();
+  c.save(); rr(c, BX, BY, BW, BH, BR); c.clip();
+  weave(c, BX, BY, BW, BH);
+  if (details) details(c);
+  bodyLight(c, BX, BY, BW, BH);
+  E(c, CX, BY - 6, 70, 26, "rgba(0,0,0,0.22)", 0); // the head's cast shadow on the chest
+  c.restore();
+  rr(c, BX, BY, BW, BH, BR); c.lineWidth = OW; c.strokeStyle = INK; c.stroke();
+}
+function head(c, o = {}) {
+  const { brow = INK, eyes = "calm", behind, over, face, hatShadow } = o;
+  if (behind) behind(c);
+  const g = c.createRadialGradient(CX - 30, HY - 34, 12, CX, HY, HR * 1.1); g.addColorStop(0, "#ffffff"); g.addColorStop(0.68, HEAD); g.addColorStop(1, "#ddd0bf");
+  E(c, CX, HY, HR, HR, g);
+  c.save(); c.beginPath(); c.arc(CX, HY, HR - 3, 0, 7); c.clip();
+  if (hatShadow) { const sg = c.createLinearGradient(0, HY - HR, 0, HY - HR + hatShadow); sg.addColorStop(0, "rgba(60,40,30,0.45)"); sg.addColorStop(1, "rgba(60,40,30,0)"); c.fillStyle = sg; c.fillRect(CX - HR, HY - HR, HR * 2, hatShadow); }
+  const rim = c.createLinearGradient(CX + HR - 22, 0, CX + HR, 0); rim.addColorStop(0, "rgba(150,200,255,0)"); rim.addColorStop(1, "rgba(150,200,255,0.45)"); c.fillStyle = rim; c.fillRect(CX, HY - HR, HR, HR * 2);
+  c.restore();
+  for (const s of [-1, 1]) {
+    const ex = CX + s * 31, ey = HY + 4;
+    E(c, ex, ey, 8.5, 12, INK, 0); E(c, ex - 2.5, ey - 4, 2.6, 3.2, "#ffffff", 0);
+    const by = HY - 28;
+    if (eyes === "stern") L(c, [[ex - 18, by + (s < 0 ? -3 : 8)], [ex + 18, by + (s < 0 ? 8 : -3)]], 9, brow);
+    else Q(c, [ex - 18, by + 5], [ex, by - 5], [ex + 18, by + 5], 9, brow);
+  }
+  if (face) face(c); else { Q(c, [CX - 18, HY + 40], [CX, HY + 53], [CX + 18, HY + 40], 6); }
+  if (over) over(c);
+}
+function moustache(c, y, col = "#2a1b14", w = 40) {
+  c.beginPath(); c.moveTo(CX, y); c.quadraticCurveTo(CX - w * 0.6, y - 12, CX - w, y + 8); c.quadraticCurveTo(CX - w * 0.5, y + 16, CX, y + 8); c.quadraticCurveTo(CX + w * 0.5, y + 16, CX + w, y + 8); c.quadraticCurveTo(CX + w * 0.6, y - 12, CX, y); c.closePath();
+  c.fillStyle = col; c.fill(); c.lineWidth = 4; c.strokeStyle = INK; c.stroke();
+  for (let k = -3; k <= 3; k++) if (k) Q(c, [CX + k * w * 0.22, y + 2], [CX + k * w * 0.26, y + 7], [CX + k * w * 0.3, y + 10], 1.4, "rgba(255,255,255,0.25)");
+}
+function card(c, top, bottom) {
+  const g = c.createLinearGradient(0, 0, 0, 700); g.addColorStop(0, top); g.addColorStop(1, bottom); c.fillStyle = g; c.fillRect(0, 0, 460, 700);
+  const r = c.createRadialGradient(190, 190, 10, 230, 280, 420); r.addColorStop(0, "rgba(255,244,222,0.6)"); r.addColorStop(1, "rgba(255,244,222,0)"); c.fillStyle = r; c.fillRect(0, 0, 460, 700);
+  E(c, CX, 654, 96, 13, "rgba(26,20,24,0.2)", 0);
+}
+function label(c, name, line) { c.fillStyle = INK; c.font = "700 32px Fredoka"; c.textAlign = "left"; c.fillText(name, 22, 44); c.font = "500 15px Fredoka"; c.fillStyle = "rgba(26,20,24,0.62)"; c.fillText(line, 22, 66); }
+
+// ---------- characters ----------
+const CAST = [
+  { name: "Cowboy", line: "felt hat · straw · leather vest · star badge · gun belt", bg: ["#f6e8cf", "#e6cca2"],
+    draw(c) { legs(c, "#6b5038", "#5a3b22"); arms(c, "hips", "#3fa79a");
+      bodyShape(c, "#3fa79a", (c) => {
+        // shirt: plaid lines, pearl snaps, collar
+        for (let x = BX; x < BX + BW; x += 14) L(c, [[x, BY], [x, BY + BH]], 2, "rgba(255,255,255,0.12)");
+        for (let y = BY; y < BY + BH; y += 14) L(c, [[BX, y], [BX + BW, y]], 2, "rgba(0,0,0,0.08)");
+        for (const y of [40, 70, 100]) button(c, CX, BY + y, "#f2eee6", 4);
+        poly(c, [[CX - 30, BY - 4], [CX - 4, BY + 26], [CX - 14, BY - 4]], "#3a9a8e", 3); poly(c, [[CX + 30, BY - 4], [CX + 4, BY + 26], [CX + 14, BY - 4]], "#3a9a8e", 3);
+        // leather vest panels with seams, wear marks
+        for (const s of [-1, 1]) {
+          poly(c, [[CX + s * 10, BY - 6], [CX + s * 80, BY - 6], [CX + s * 80, BY + BH + 6], [CX + s * 26, BY + BH + 6], [CX + s * 20, BY + 70]], vgrad(c, BY, BY + BH, "#8a5a34"), 4);
+          stitch(c, [[CX + s * 17, BY + 4], [CX + s * 27, BY + 70], [CX + s * 32, BY + BH]], "rgba(255,230,190,0.6)");
+          fold(c, [CX + s * 50, BY + 30], [CX + s * 44, BY + 90], [CX + s * 54, BY + 150]);
+          for (let k = 0; k < 4; k++) E(c, CX + s * (40 + k * 7), BY + 120 + k * 9, 3, 1.5, "rgba(255,220,180,0.25)", 0);
+        }
+        pocket(c, CX + 26, BY + 46, 30, 24, "#7a4e2c");
+        // star badge
+        const sx = CX - 42, sy = BY + 62; const pts = []; for (let k = 0; k < 10; k++) { const r = k % 2 ? 7 : 16, a = -Math.PI / 2 + k * Math.PI / 5; pts.push([sx + r * Math.cos(a), sy + r * Math.sin(a)]); } poly(c, pts, "#f2c84a", 3); E(c, sx, sy, 5, 5, "#d9a42a", 2); E(c, sx - 5, sy - 6, 2.5, 1.5, "rgba(255,255,255,0.8)", 0);
+        // gun belt with holes + engraved buckle
+        L(c, [[BX, BY + 158], [BX + BW, BY + 158]], 16, "#4a3020"); stitch(c, [[BX, BY + 152], [BX + BW, BY + 152]], "rgba(255,220,180,0.5)"); stitch(c, [[BX, BY + 164], [BX + BW, BY + 164]], "rgba(255,220,180,0.5)");
+        for (let k = 0; k < 4; k++) E(c, CX + 30 + k * 10, BY + 158, 2, 2, INK, 0);
+        for (let k = 0; k < 6; k++) { rr(c, BX + 6 + k * 9, BY + 150, 6, 15, 2); c.fillStyle = "#d9b44a"; c.fill(); }
+        metal(c, CX - 22, BY + 146, 44, 26, "#cfd3d8"); E(c, CX, BY + 159, 8, 6, null, 1.5);
+      });
+      // holster + revolver grip
+      rr(c, CX + 60, BY + 138, 26, 64, 8); c.fillStyle = vgrad(c, BY + 138, BY + 202, "#6b4228"); c.fill(); c.lineWidth = 5; c.strokeStyle = INK; c.stroke(); stitch(c, [[CX + 64, BY + 144], [CX + 64, BY + 196]], "rgba(255,220,180,0.6)");
+      rr(c, CX + 64, BY + 116, 16, 28, 5); c.fillStyle = "#e9e2d2"; c.fill(); c.stroke(); for (let k = 0; k < 4; k++) L(c, [[CX + 67, BY + 122 + k * 5], [CX + 77, BY + 122 + k * 5]], 1.2, "rgba(0,0,0,0.3)");
+      head(c, { eyes: "stern", hatShadow: 46, face: (c) => { moustache(c, HY + 34); Q(c, [CX + 26, HY + 48], [CX + 44, HY + 54], [CX + 62, HY + 66], 4, "#e8c45a"); Q(c, [CX + 30, HY + 50], [CX + 44, HY + 56], [CX + 58, HY + 64], 1.5, "#b8902a"); for (let k = 0; k < 18; k++) E(c, CX - 30 + (k % 9) * 7.5, HY + 58 + Math.floor(k / 9) * 6, 1.4, 1.4, "rgba(26,20,24,0.45)", 0); },
+        over: (c) => {
+          // brim with curl + underside shade, crown with pinch dents, band with conchos
+          c.beginPath(); c.moveTo(CX - 150, HY - 62); c.quadraticCurveTo(CX - 150, HY - 92, CX - 120, HY - 82); c.quadraticCurveTo(CX, HY - 112, CX + 120, HY - 82); c.quadraticCurveTo(CX + 150, HY - 92, CX + 150, HY - 62); c.quadraticCurveTo(CX, HY - 40, CX - 150, HY - 62);
+          c.fillStyle = vgrad(c, HY - 110, HY - 40, "#d9b77c"); c.fill(); c.lineWidth = OW; c.strokeStyle = INK; c.stroke();
+          Q(c, [CX - 130, HY - 62], [CX, HY - 50], [CX + 130, HY - 62], 3, "rgba(90,60,30,0.35)");
+          stitchQ(c, [CX - 136, HY - 70], [CX, HY - 56], [CX + 136, HY - 70], "rgba(110,70,30,0.45)");
+          c.beginPath(); c.moveTo(CX - 66, HY - 72); c.quadraticCurveTo(CX - 72, HY - 156, CX - 30, HY - 152); c.quadraticCurveTo(CX, HY - 132, CX + 30, HY - 152); c.quadraticCurveTo(CX + 72, HY - 156, CX + 66, HY - 72); c.closePath();
+          c.fillStyle = vgrad(c, HY - 156, HY - 72, "#e3c48c"); c.fill(); c.stroke();
+          Q(c, [CX - 30, HY - 148], [CX - 22, HY - 118], [CX - 26, HY - 96], 3, "rgba(90,60,30,0.35)"); Q(c, [CX + 30, HY - 148], [CX + 22, HY - 118], [CX + 26, HY - 96], 3, "rgba(90,60,30,0.35)");
+          E(c, CX - 40, HY - 132, 8, 18, "rgba(255,255,255,0.22)", 0, 0.2);
+          L(c, [[CX - 66, HY - 86], [CX + 66, HY - 86]], 12, "#5a3b22"); for (let k = -3; k <= 3; k++) { E(c, CX + k * 18, HY - 86, 4.5, 4.5, "#cfd3d8", 2); }
+        } }); } },
+  { name: "Santa", line: "velvet suit · fur trim · curly beard · gold buckle", bg: ["#fbe4e2", "#f0bfbb"],
+    draw(c) { legs(c, null, "#1d1418"); arms(c, "hang", "#c22a2a");
+      bodyShape(c, "#c92b2b", (c) => {
+        // velvet sheen bands, folds
+        for (let k = 0; k < 5; k++) Q(c, [BX + 10 + k * 26, BY + 20], [BX + 18 + k * 26, BY + 100], [BX + 8 + k * 26, BY + 180], 6, "rgba(255,255,255,0.05)");
+        fold(c, [CX - 46, BY + 40], [CX - 52, BY + 100], [CX - 40, BY + 140]); fold(c, [CX + 44, BY + 50], [CX + 50, BY + 110], [CX + 42, BY + 150]);
+        furBand(c, CX - 15, CX + 15, BY - 6, BH + 12);
+        furBand(c, BX - 10, BX + BW + 10, BY + BH - 30, 34);
+        // belt: holes, keeper loop, buckle with engraving + prong
+        L(c, [[BX, BY + 128], [BX + BW, BY + 128]], 22, "#1d1418"); L(c, [[BX, BY + 120], [BX + BW, BY + 120]], 2, "rgba(255,255,255,0.18)");
+        for (let k = 0; k < 4; k++) E(c, CX + 34 + k * 9, BY + 128, 2.2, 2.2, "#4a4048", 0);
+        metal(c, CX - 22, BY + 112, 44, 32, "#f2c84a"); rr(c, CX - 12, BY + 120, 24, 16, 2); c.fillStyle = "#1d1418"; c.fill(); L(c, [[CX - 12, BY + 128], [CX + 6, BY + 128]], 3, "#f2c84a");
+        rr(c, CX + 46, BY + 117, 10, 22, 2); c.lineWidth = 3; c.strokeStyle = "#3a3038"; c.stroke();
+        for (const y of [40, 74]) button(c, CX, BY + y, "#1d1418", 5);
+      });
+      // mittens
+      for (const s of [-1, 1]) { E(c, CX + s * 94, BY + 156, 14, 13, "#2f6e3a", 4); furBand(c, CX + s * 94 - 14, CX + s * 94 + 14, BY + 138, 10); }
+      head(c, { hatShadow: 34, face: () => {}, over: (c) => {
+        // beard: layered curls with strands
+        const r = rnd(42);
+        c.beginPath(); c.moveTo(CX - 84, HY + 4); c.quadraticCurveTo(CX - 96, HY + 142, CX, HY + 160); c.quadraticCurveTo(CX + 96, HY + 142, CX + 84, HY + 4); c.quadraticCurveTo(CX + 52, HY + 52, CX, HY + 54); c.quadraticCurveTo(CX - 52, HY + 52, CX - 84, HY + 4);
+        c.fillStyle = vgrad(c, HY, HY + 160, "#fbfaf7"); c.fill(); c.lineWidth = OW; c.strokeStyle = INK; c.stroke();
+        for (let k = 0; k < 26; k++) { const x = CX - 70 + r() * 140, y = HY + 60 + r() * 86; c.beginPath(); c.arc(x, y, 6 + r() * 5, Math.PI * 0.1, Math.PI * 0.95); c.lineWidth = 1.8; c.strokeStyle = "rgba(0,0,0,0.16)"; c.stroke(); }
+        for (let k = 0; k < 14; k++) { const x = CX - 60 + r() * 120; Q(c, [x, HY + 70 + r() * 20], [x + 4, HY + 110], [x - 2, HY + 140 + r() * 10], 1.2, "rgba(180,180,190,0.5)"); }
+        // big moustache + rosy nose + cheeks
+        E(c, CX - 52, HY + 26, 16, 10, "rgba(255,120,120,0.35)", 0); E(c, CX + 52, HY + 26, 16, 10, "rgba(255,120,120,0.35)", 0);
+        // small mouth peeking under the moustache
+        E(c, CX, HY + 62, 11, 7, "#7a2a34", 4); E(c, CX, HY + 65, 6, 3, "#e8707e", 0);
+        // classic Santa moustache: two fluffy lobes with upward-curled tips, layered strands
+        for (const s of [-1, 1]) {
+          const X = (dx) => CX + s * dx;
+          c.beginPath();
+          c.moveTo(X(2), HY + 30);
+          c.bezierCurveTo(X(16), HY + 22, X(40), HY + 20, X(58), HY + 30);
+          c.bezierCurveTo(X(70), HY + 36, X(80), HY + 30, X(84), HY + 16);   // tip curls up
+          c.bezierCurveTo(X(96), HY + 26, X(92), HY + 50, X(74), HY + 56);
+          c.bezierCurveTo(X(56), HY + 62, X(30), HY + 62, X(14), HY + 54);
+          c.bezierCurveTo(X(6), HY + 50, X(0), HY + 44, X(2), HY + 30);
+          c.closePath();
+          const mg = c.createLinearGradient(0, HY + 18, 0, HY + 62); mg.addColorStop(0, "#ffffff"); mg.addColorStop(1, "#dcdbe2");
+          c.fillStyle = mg; c.fill(); c.lineWidth = 5.5; c.strokeStyle = INK; c.stroke();
+          // strands following the lobe
+          for (let k = 0; k < 6; k++) { const t0 = 8 + k * 11; Q(c, [X(t0), HY + 34 + k * 0.5], [X(t0 + 14), HY + 44], [X(t0 + 6), HY + 54], 1.6, "rgba(120,120,140,0.45)"); }
+          Q(c, [X(62), HY + 34], [X(76), HY + 38], [X(84), HY + 22], 1.6, "rgba(120,120,140,0.45)");
+          E(c, X(34), HY + 32, 12, 4, "rgba(255,255,255,0.9)", 0, s * -0.15);
+        }
+        // nose on top: round, rosy, glossy
+        const ng = c.createRadialGradient(CX - 4, HY + 14, 2, CX, HY + 20, 15); ng.addColorStop(0, "#ffc2bc"); ng.addColorStop(1, "#e2706a");
+        E(c, CX, HY + 20, 14, 11, ng, 4.5); E(c, CX - 5, HY + 16, 4, 2.6, "rgba(255,255,255,0.75)", 0);
+        // hat: velvet cone with folds, fur brim, pom-pom
+        c.beginPath(); c.moveTo(CX - 86, HY - 52); c.quadraticCurveTo(CX - 30, HY - 170, CX + 92, HY - 150); c.quadraticCurveTo(CX + 108, HY - 110, CX + 70, HY - 96); c.quadraticCurveTo(CX + 56, HY - 70, CX + 86, HY - 52); c.closePath();
+        c.fillStyle = vgrad(c, HY - 170, HY - 52, "#d22f2f"); c.fill(); c.stroke();
+        fold(c, [CX - 30, HY - 70], [CX - 10, HY - 120], [CX + 40, HY - 140]); fold(c, [CX + 30, HY - 74], [CX + 50, HY - 104], [CX + 76, HY - 116]);
+        furBand(c, CX - 98, CX + 98, HY - 74, 34);
+        { const px = CX + 96, py = HY - 150, n = 12; c.beginPath(); for (let k = 0; k <= n; k++) { const a0 = (k / n) * Math.PI * 2, a1 = ((k + 0.5) / n) * Math.PI * 2, a2 = ((k + 1) / n) * Math.PI * 2; if (k === 0) c.moveTo(px + 21 * Math.cos(a0), py + 21 * Math.sin(a0)); if (k < n) c.quadraticCurveTo(px + 27 * Math.cos(a1), py + 27 * Math.sin(a1), px + 21 * Math.cos(a2), py + 21 * Math.sin(a2)); } c.closePath();
+          const pg = c.createRadialGradient(px - 7, py - 8, 2, px, py, 26); pg.addColorStop(0, "#ffffff"); pg.addColorStop(1, "#d9d8e0"); c.fillStyle = pg; c.fill(); c.lineWidth = 5; c.strokeStyle = INK; c.stroke();
+          const pr = rnd(7); for (let k = 0; k < 10; k++) { const a = pr() * 6.28, d = pr() * 14; Q(c, [px + d * Math.cos(a), py + d * Math.sin(a)], [px + d * Math.cos(a) + 3, py + d * Math.sin(a) - 3], [px + d * Math.cos(a) + 6, py + d * Math.sin(a)], 1.3, "rgba(0,0,0,0.18)"); } }
+      } }); } },
+  { name: "Elf", line: "felt hat + jingle bell · scalloped collar · striped tights", bg: ["#e2f2df", "#bfdfb8"],
+    draw(c) { legs(c, "#d22f2f", "#2f7a3e", "#f6f3ee"); arms(c, "hang", "#2f9a4f");
+      bodyShape(c, "#2f9a4f", (c) => {
+        // felt texture specks
+        const r = rnd(5); for (let k = 0; k < 160; k++) E(c, BX + r() * BW, BY + r() * BH, 0.9, 0.9, r() > 0.5 ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)", 0);
+        // scalloped collar with bells
+        c.beginPath(); c.moveTo(BX - 4, BY - 6); c.lineTo(BX + BW + 4, BY - 6); for (let k = 8; k >= 0; k--) { const x = BX + k * (BW / 8); c.quadraticCurveTo(x + BW / 16, BY + 40, x, BY + 16); } c.closePath();
+        c.fillStyle = vgrad(c, BY, BY + 40, "#d22f2f"); c.fill(); c.lineWidth = 4; c.strokeStyle = INK; c.stroke();
+        for (let k = 0; k < 8; k++) { const x = BX + (k + 0.5) * (BW / 8); E(c, x, BY + 34, 4.5, 4.5, "#f2c84a", 2); L(c, [[x - 2, BY + 35], [x + 2, BY + 35]], 1.2); }
+        stitchQ(c, [BX, BY + 20], [CX, BY + 26], [BX + BW, BY + 20]);
+        // tunic hem points, gold trim, belt
+        for (let k = 0; k < 5; k++) poly(c, [[BX + k * (BW / 5), BY + BH - 30], [BX + (k + 0.5) * (BW / 5), BY + BH - 6], [BX + (k + 1) * (BW / 5), BY + BH - 30]], "#2a8a46", 3);
+        L(c, [[BX, BY + BH - 30], [BX + BW, BY + BH - 30]], 5, "#f2c84a");
+        L(c, [[BX, BY + 132], [BX + BW, BY + 132]], 18, "#3a2a1e"); stitch(c, [[BX, BY + 126], [BX + BW, BY + 126]], "rgba(255,220,180,0.5)"); stitch(c, [[BX, BY + 138], [BX + BW, BY + 138]], "rgba(255,220,180,0.5)");
+        metal(c, CX - 16, BY + 120, 32, 24, "#f2c84a"); rr(c, CX - 8, BY + 126, 16, 12, 2); c.fillStyle = "#3a2a1e"; c.fill();
+        for (const y of [64, 96]) button(c, CX, BY + y, "#f2c84a", 5.5);
+        fold(c, [CX - 40, BY + 60], [CX - 46, BY + 100], [CX - 38, BY + 120]); fold(c, [CX + 38, BY + 60], [CX + 44, BY + 96], [CX + 36, BY + 118]);
+      });
+      head(c, { hatShadow: 30, behind: (c) => { for (const s of [-1, 1]) { poly(c, [[CX + s * 80, HY - 8], [CX + s * 136, HY - 46], [CX + s * 86, HY + 28]], HEAD); poly(c, [[CX + s * 86, HY - 4], [CX + s * 122, HY - 32], [CX + s * 88, HY + 16]], "#f2c4b8", 0); } },
+        face: (c) => { Q(c, [CX - 22, HY + 38], [CX, HY + 56], [CX + 22, HY + 38], 6); E(c, CX - 48, HY + 28, 12, 7, "rgba(255,120,120,0.35)", 0); E(c, CX + 48, HY + 28, 12, 7, "rgba(255,120,120,0.35)", 0); for (const [x, y] of [[-40, 34], [-34, 40], [-46, 40], [40, 34], [34, 40], [46, 40]]) E(c, CX + x, HY + y, 1.4, 1.4, "rgba(150,80,60,0.6)", 0); },
+        over: (c) => {
+          c.beginPath(); c.moveTo(CX - 92, HY - 40); c.quadraticCurveTo(CX - 20, HY - 210, CX + 120, HY - 176); c.quadraticCurveTo(CX + 136, HY - 150, CX + 110, HY - 140); c.quadraticCurveTo(CX + 50, HY - 110, CX + 92, HY - 40); c.closePath();
+          c.fillStyle = vgrad(c, HY - 210, HY - 40, "#2f9a4f"); c.fill(); c.lineWidth = OW; c.strokeStyle = INK; c.stroke();
+          const r = rnd(9); c.save(); c.clip(); for (let k = 0; k < 120; k++) E(c, CX - 90 + r() * 220, HY - 210 + r() * 170, 0.9, 0.9, r() > 0.5 ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.14)", 0); c.restore();
+          fold(c, [CX - 30, HY - 60], [CX, HY - 130], [CX + 70, HY - 160]);
+          rr(c, CX - 98, HY - 58, 196, 28, 14); c.fillStyle = vgrad(c, HY - 58, HY - 30, "#d22f2f"); c.fill(); c.stroke(); stitch(c, [[CX - 90, HY - 44], [CX + 90, HY - 44]]);
+          E(c, CX + 124, HY - 168, 15, 15, "#f2c84a", 5); L(c, [[CX + 112, HY - 166], [CX + 136, HY - 166]], 3); E(c, CX + 124, HY - 160, 3, 3, INK, 0); E(c, CX + 119, HY - 174, 4, 3, "rgba(255,255,255,0.8)", 0);
+          for (const [dx, dy] of [[-28, 8], [-38, -4], [28, 8], [38, -4]]) L(c, [[CX + 124 + dx * 0.6, HY - 168 + dy * 0.6], [CX + 124 + dx, HY - 168 + dy]], 3, "rgba(242,200,74,0.8)");
+        } }); } },
+  { name: "Chef", line: "pleated toque · double-breasted jacket · apron · towel", bg: ["#f7f0e6", "#e8dac6"],
+    draw(c) { legs(c, null, "#2a2a33"); for (const s of [-1, 1]) { for (let k = 0; k < 7; k++) { const y = LEG_Y0 + 8 + k * 20; L(c, [[CX + s * 28 - 3, y], [CX + s * 28 + 3, y + 6]], 2, "#bdbdc6"); } } arms(c, "hang", "#f4f4f2");
+      bodyShape(c, "#fbfbfa", (c) => {
+        // overlapping double-breast panel, two rows of cloth knot buttons, piping, folds
+        poly(c, [[CX - 52, BY - 6], [CX + 56, BY - 6], [CX + 60, BY + BH + 6], [CX - 30, BY + BH + 6], [CX - 30, BY + 30]], "rgba(0,0,0,0.04)", 2.5);
+        L(c, [[CX - 30, BY + 30], [CX - 30, BY + BH]], 3, "#d22f2f");
+        for (const s of [-1, 1]) for (const y of [52, 88, 124]) { E(c, CX + s * 24 + 6, BY + y, 6.5, 6.5, "#1d1418", 2.5); E(c, CX + s * 24 + 4, BY + y - 2, 2, 1.5, "rgba(255,255,255,0.7)", 0); }
+        fold(c, [CX - 50, BY + 50], [CX - 56, BY + 110], [CX - 46, BY + 150], "rgba(0,0,0,0.12)"); fold(c, [CX + 48, BY + 40], [CX + 54, BY + 100], [CX + 46, BY + 140], "rgba(0,0,0,0.12)");
+        pocket(c, CX - 56, BY + 44, 24, 20, "#f4f4f2"); L(c, [[CX - 50, BY + 40], [CX - 49, BY + 52]], 3, "#2f6fb5"); L(c, [[CX - 42, BY + 38], [CX - 41, BY + 52]], 3, "#e8622c");
+        // apron with strings, pocket and stitched hem
+        rr(c, BX - 4, BY + 140, BW + 8, 70, 4); c.fillStyle = vgrad(c, BY + 140, BY + 210, "#2f3f6e"); c.fill(); c.lineWidth = 3; c.strokeStyle = INK; c.stroke();
+        stitch(c, [[BX, BY + 146], [BX + BW, BY + 146]]); for (let x = BX + 6; x < BX + BW; x += 18) L(c, [[x, BY + 150], [x, BY + 200]], 1.2, "rgba(255,255,255,0.08)");
+        L(c, [[CX + 20, BY + 140], [CX + 70, BY + 150]], 4, "#2f3f6e");
+        // neckerchief knot
+        poly(c, [[CX - 30, BY - 6], [CX, BY + 22], [CX + 30, BY - 6]], vgrad(c, BY, BY + 22, "#d22f2f"), 3); E(c, CX, BY + 16, 9, 7, "#c22626", 3); poly(c, [[CX - 4, BY + 20], [CX + 8, BY + 22], [CX + 2, BY + 44]], "#c22626", 3); poly(c, [[CX + 2, BY + 20], [CX - 10, BY + 24], [CX - 6, BY + 42]], "#d22f2f", 3);
+      });
+      // towel over the arm
+      poly(c, [[CX - 104, BY + 92], [CX - 76, BY + 88], [CX - 70, BY + 160], [CX - 98, BY + 166]], vgrad(c, BY + 88, BY + 166, "#f2f2f2"), 4); for (let k = 0; k < 3; k++) L(c, [[CX - 100 + k * 2, BY + 140 + k * 6], [CX - 72 + k * 2, BY + 136 + k * 6]], 2.5, "#e05a4a");
+      head(c, { hatShadow: 28, face: (c) => { Q(c, [CX - 16, HY + 52], [CX, HY + 62], [CX + 16, HY + 52], 6); moustache(c, HY + 30, "#2a1b14", 44); Q(c, [CX - 44, HY + 38], [CX - 56, HY + 26], [CX - 48, HY + 18], 4, "#2a1b14"); Q(c, [CX + 44, HY + 38], [CX + 56, HY + 26], [CX + 48, HY + 18], 4, "#2a1b14"); },
+        over: (c) => {
+          for (const [x, y, r] of [[CX - 46, HY - 156, 34], [CX, HY - 172, 42], [CX + 46, HY - 156, 34], [CX - 22, HY - 140, 30], [CX + 22, HY - 140, 30]]) E(c, x, y, r, r, vgrad(c, y - r, y + r, "#ffffff"));
+          rr(c, CX - 66, HY - 140, 132, 70, 12); c.fillStyle = vgrad(c, HY - 140, HY - 70, "#ffffff"); c.fill(); c.lineWidth = OW; c.strokeStyle = INK; c.stroke();
+          for (let k = -2; k <= 2; k++) { L(c, [[CX + k * 24, HY - 132], [CX + k * 24, HY - 78]], 2.5, "rgba(0,0,0,0.14)"); L(c, [[CX + k * 24 + 4, HY - 132], [CX + k * 24 + 4, HY - 78]], 2, "rgba(255,255,255,0.7)"); }
+          stitch(c, [[CX - 60, HY - 82], [CX + 60, HY - 82]], "rgba(0,0,0,0.25)");
+          for (const [x, y] of [[CX - 46, HY - 166], [CX + 10, HY - 190]]) E(c, x, y, 10, 6, "rgba(255,255,255,0.9)", 0);
+        } }); } },
+  { name: "Doctor", line: "head mirror · glasses · lab coat · stethoscope · ID badge", bg: ["#e2eef6", "#c3d8ea"],
+    draw(c) { legs(c, "#5b8fd0", "#e9eef2"); arms(c, "hang", "#f4f4f2");
+      bodyShape(c, "#fbfbfa", (c) => {
+        // scrubs V-neck under the coat
+        rr(c, CX - 30, BY - 6, 60, BH + 12, 10); c.fillStyle = vgrad(c, BY, BY + BH, "#6aa0dc"); c.fill(); c.lineWidth = 2.5; c.strokeStyle = INK; c.stroke();
+        poly(c, [[CX - 16, BY - 6], [CX, BY + 22], [CX + 16, BY - 6]], "#5a8fcb", 2.5); stitch(c, [[CX - 26, BY + 30], [CX - 26, BY + BH]], "rgba(255,255,255,0.4)");
+        // coat lapels with notch, seams, folds
+        for (const s of [-1, 1]) { poly(c, [[CX + s * 30, BY - 6], [CX + s * 34, BY + 70], [CX + s * 50, BY + 40], [CX + s * 40, BY + 26], [CX + s * 54, BY - 6]], "#eef0f2", 3); stitch(c, [[CX + s * 36, BY + 4], [CX + s * 38, BY + 60]], "rgba(0,0,0,0.2)"); fold(c, [CX + s * 54, BY + 80], [CX + s * 60, BY + 130], [CX + s * 52, BY + 170], "rgba(0,0,0,0.12)"); }
+        for (const y of [96, 136]) button(c, CX + 34, BY + y, "#e9eef2", 5);
+        // pocket with pens + clip
+        pocket(c, CX + 36, BY + 52, 28, 26, "#f4f4f2"); L(c, [[CX + 42, BY + 44], [CX + 43, BY + 60]], 3.5, "#2f6fb5"); L(c, [[CX + 51, BY + 42], [CX + 52, BY + 60]], 3.5, "#d22f2f"); L(c, [[CX + 58, BY + 46], [CX + 58, BY + 60]], 2.5, "#9aa2b0");
+        // ID badge on lanyard
+        L(c, [[CX - 26, BY - 4], [CX - 46, BY + 56]], 3, "#2f6fb5"); rr(c, CX - 62, BY + 56, 32, 42, 4); c.fillStyle = "#ffffff"; c.fill(); c.lineWidth = 3; c.strokeStyle = INK; c.stroke(); rr(c, CX - 58, BY + 62, 24, 8, 2); c.fillStyle = "#2f6fb5"; c.fill(); E(c, CX - 46, BY + 80, 7, 7, "#f2c8a4", 2); L(c, [[CX - 56, BY + 92], [CX - 36, BY + 92]], 2, "rgba(0,0,0,0.4)");
+        pocket(c, CX - 62, BY + 132, 30, 28, "#f4f4f2");
+      });
+      // stethoscope: tubing, Y-joint, chest piece with rim
+      c.beginPath(); c.moveTo(CX - 34, BY + 6); c.quadraticCurveTo(CX - 46, BY + 90, CX - 8, BY + 100); c.moveTo(CX + 34, BY + 6); c.quadraticCurveTo(CX + 26, BY + 80, CX - 8, BY + 100); c.lineWidth = 9; c.strokeStyle = INK; c.stroke(); c.lineWidth = 5; c.strokeStyle = "#3a3f4a"; c.stroke();
+      L(c, [[CX - 8, BY + 100], [CX - 4, BY + 128]], 9); L(c, [[CX - 8, BY + 100], [CX - 4, BY + 128]], 5, "#3a3f4a");
+      E(c, CX - 4, BY + 138, 13, 13, "#c9ced6", 4); E(c, CX - 4, BY + 138, 7, 7, "#9aa2b0", 2); E(c, CX - 8, BY + 133, 3, 2, "rgba(255,255,255,0.8)", 0);
+      head(c, { brow: "#5a3b22", hatShadow: 20, face: (c) => { Q(c, [CX - 18, HY + 42], [CX, HY + 54], [CX + 18, HY + 42], 6); },
+        over: (c) => {
+          // hair, round glasses with lens glare, head mirror on a strap
+          c.beginPath(); c.arc(CX, HY, HR - 3, Math.PI * 1.06, Math.PI * 1.94); c.quadraticCurveTo(CX + 40, HY - 56, CX, HY - 50); c.quadraticCurveTo(CX - 40, HY - 56, CX - HR + 8, HY - 26); c.closePath();
+          c.fillStyle = vgrad(c, HY - HR, HY - 40, "#8a5a3a"); c.fill(); c.lineWidth = OW; c.strokeStyle = INK; c.stroke();
+          for (let k = 0; k < 6; k++) Q(c, [CX - 60 + k * 22, HY - 82], [CX - 52 + k * 22, HY - 70], [CX - 56 + k * 22, HY - 56], 2, "rgba(255,255,255,0.18)");
+          for (const s of [-1, 1]) { E(c, CX + s * 31, HY + 4, 24, 23, "rgba(220,240,255,0.22)", 5); L(c, [[CX + s * 31 - 12, HY - 8], [CX + s * 31 - 2, HY - 14]], 3, "rgba(255,255,255,0.8)"); } L(c, [[CX - 7, HY + 2], [CX + 7, HY + 2]], 5);
+          L(c, [[CX - 86, HY - 36], [CX + 86, HY - 36]], 11, "#3a3f4a"); L(c, [[CX - 86, HY - 40], [CX + 86, HY - 40]], 2, "rgba(255,255,255,0.25)");
+          E(c, CX, HY - 50, 26, 26, "#c9ced6", 5); const mg = c.createRadialGradient(CX - 8, HY - 58, 2, CX, HY - 50, 22); mg.addColorStop(0, "#ffffff"); mg.addColorStop(1, "#8fa6bc"); E(c, CX, HY - 50, 18, 18, mg, 3); E(c, CX, HY - 50, 5, 5, INK, 0);
+        } }); } },
+  { name: "Base", line: "the rig every outfit is built on", bg: ["#ece6dc", "#d9cfbf"],
+    draw(c) { legs(c, "#3b3f52", "#241726"); arms(c, "hang", "#8fc7e6");
+      bodyShape(c, "#8fc7e6", (c) => { for (const s of [-1, 1]) poly(c, [[CX + s * 4, BY - 6], [CX + s * 34, BY + 26], [CX + s * 42, BY - 6]], "#ffffff", 3); stitch(c, [[CX, BY + 24], [CX, BY + BH]], "rgba(0,0,0,0.2)"); for (const y of [50, 86, 122, 158]) button(c, CX, BY + y, "#ffffff", 5); pocket(c, CX + 22, BY + 50, 28, 24, "#82bcdc"); fold(c, [CX - 46, BY + 70], [CX - 52, BY + 120], [CX - 44, BY + 160]); });
+      head(c, { over: (c) => { c.beginPath(); c.arc(CX, HY, HR - 3, Math.PI * 1.02, Math.PI * 1.98); c.lineTo(CX + HR - 4, HY - 22); c.quadraticCurveTo(CX + 30, HY - 52, CX - 10, HY - 44); c.quadraticCurveTo(CX - 50, HY - 40, CX - HR + 4, HY - 22); c.closePath(); c.fillStyle = vgrad(c, HY - HR, HY - 30, "#4a3426"); c.fill(); c.lineWidth = OW; c.strokeStyle = INK; c.stroke(); for (let k = 0; k < 6; k++) Q(c, [CX - 56 + k * 22, HY - 80], [CX - 46 + k * 22, HY - 66], [CX - 52 + k * 22, HY - 48], 2, "rgba(255,255,255,0.18)"); } }); } },
+];
+const sheet = document.getElementById("sheet");
+const page = (location.hash || "#a").slice(1);
+document.getElementById("ttl").textContent = page === "b" ? "Detailed outfits · same rig (2/2)" : "Detailed outfits · same rig (1/2)";
+document.fonts.ready.then(() => CAST.forEach((ch, i) => { if (page === "a" && i > 2) return; if (page === "b" && i < 3) return;
+  const cv = document.createElement("canvas"); cv.width = 920; cv.height = 1400; const c = P(cv.getContext("2d")); c.scale(2, 2);
+  card(c, ch.bg[0], ch.bg[1]); c.save(); c.translate(230, ch.name === "Chef" ? 96 : 70); c.scale(ch.name === "Chef" ? 0.85 : 0.88, ch.name === "Chef" ? 0.85 : 0.88); c.translate(-230, 0); ch.draw(c); c.restore(); label(c, ch.name, ch.line); sheet.appendChild(cv); }));
+</script>
