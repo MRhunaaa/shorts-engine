@@ -1,0 +1,275 @@
+<title>Host Casting Room</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: a dark "casting studio" — each candidate under its own warm key light; looks shown as lit mini-sets. Single dark look on purpose (the page is about glow + light). */
+:root {
+  --bg: #12131f; --panel: #1b1d2e; --panel2: #23263b; --ink: #f2efe6; --muted: #a8a9c0; --line: #33364f;
+  --warm: #ffb85c; --mint: #7cfc9a; --sky: #6ab8ff; --rose: #ff7a9a;
+  --display: "Fredoka", "Baloo 2", system-ui, sans-serif; --body: "Inter", system-ui, -apple-system, Segoe UI, sans-serif;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--body); line-height: 1.55; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: 0.2px; }
+h1 { font-size: clamp(32px, 5vw, 52px); font-weight: 700; }
+h2 { font-size: clamp(24px, 3.4vw, 34px); font-weight: 600; margin-top: 56px; }
+.lede { color: var(--muted); max-width: 68ch; margin: 10px 0 0; }
+.eyebrow { font-size: 12px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--warm); font-weight: 600; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; margin-top: 22px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.card canvas { display: block; width: 100%; height: auto; aspect-ratio: 360 / 440; background: #0d0e18; }
+.meta { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+.row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.name { font-family: var(--display); font-size: 22px; font-weight: 600; }
+.tag { font-size: 12px; color: var(--muted); }
+.pill { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pill.top { background: #3a2f17; border-color: #6b5320; color: var(--warm); }
+.hook { font-size: 14px; }
+.line { font-family: var(--display); color: var(--mint); font-size: 15px; }
+.pc { font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
+.pc b { color: var(--ink); font-weight: 600; }
+.looks { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; margin-top: 22px; }
+.look canvas { aspect-ratio: 360 / 300; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-top: 18px; }
+.note { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+.note h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+.note p { margin: 0; color: var(--muted); font-size: 14px; }
+.pick { margin-top: 18px; background: linear-gradient(180deg, #2a2338, #1b1d2e); border: 1px solid #4a3a5c; border-radius: 14px; padding: 18px 20px; }
+.pick ol { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 6px; }
+.small { font-size: 12px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+.wrap{max-width:1840px!important;padding:28px!important} .lede,.notes,.pick,.pc,.hook,.eyebrow{display:none!important} h1{font-size:46px} .card canvas{aspect-ratio:auto} .meta{gap:4px!important} .name{font-size:28px!important} .tag{font-size:16px!important} .line{font-size:18px!important} .looks{grid-template-columns:repeat(3,1fr)!important} #cast,h2:nth-of-type(1),h2:nth-of-type(3){display:none!important} h2:nth-of-type(2){display:none} h1::after{content:" · 6 signature looks"} .look .hook{display:block!important;font-size:16px}</style>
+
+<div class="wrap">
+  <div class="eyebrow">Shorts host casting · drawn in code, same engine as our videos</div>
+  <h1>Host Casting Room</h1>
+  <p class="lede">Ten original main characters for a channel in the "one underdog, mocked, proven right" format, plus six signature looks. Every picture on this page is drawn by code with canvas, so it shows what our renderer can really make. Scores are my estimate of viral fit, not data.</p>
+
+  <h2>The 10 candidates</h2>
+  <div class="grid" id="cast"></div>
+
+  <h2>Signature looks</h2>
+  <p class="lede">The same little night scene (a host, a lamp, a window, a rug) in six treatments. Your sample video wins on light: moonlight vs a warm lamp pool, glow and bloom, rich props. Look 1 is built to match that, without oversaturating.</p>
+  <div class="looks" id="looks"></div>
+
+  <h2>What makes your sample feel alive</h2>
+  <div class="notes">
+    <div class="note"><h3>Light tells the mood</h3><p>Blue moonlight at night against a warm torch cone on the floor, golden window shafts by day, lens flare and glowing props (headlamp, lamp).</p></div>
+    <div class="note"><h3>Rooms full of story props</h3><p>Wallpaper, framed pictures, plant, curtains, patterned rug, fluffy carpet, checker tiles, fridge magnets, a "DON'T MOVE!" note, wall phone, calendar, a cat.</p></div>
+    <div class="note"><h3>Extreme, close cameras</h3><p>Wide lens very close to faces, worm's-eye shots from the floor, top-down views, dutch tilts, and a camera that dives from a face down to a couch leg.</p></div>
+    <div class="note"><h3>Big faces, soft shading</h3><p>Heads fill a third of the frame, thick outlines, very expressive brows, clothes with gradient shading instead of flat fills.</p></div>
+    <div class="note"><h3>Transitions with a lens</h3><p>A glass-bubble distortion, blurred zoom-throughs and ghost dissolves between places.</p></div>
+    <div class="note"><h3>What we change next</h3><p>Interior sets with 15-20 props, a night/lamp light rig with bloom, wide-lens close-ups and floor-level angles, bigger faces, gradient clothes.</p></div>
+  </div>
+
+  <div class="pick">
+    <div class="eyebrow">My recommendation</div>
+    <ol>
+      <li><b>Oyen</b> (orange cat-head) or <b>Prof. Embek</b> (goat-head professor) as the main host: animal head + human body reads instantly, is funny on mute, and fits the explainer voice.</li>
+      <li><b>Look 1, Glow Toon</b>: night/lamp contrast, soft bloom, gradient shading. Closest to your sample, easy on the eyes.</li>
+      <li>Keep <b>Dino Topi</b> as a recurring sidekick, so the work already done stays useful.</li>
+    </ol>
+    <p class="small">Brainrot-style characters trend fast and fade fast, and the famous ones belong to other creators, so the brainrot option here is our own creature.</p>
+  </div>
+</div>
+
+<script>
+// ---------- tiny drawing kit ----------
+const INK = "#1d1626";
+function ctxOf(cv) { const c = cv.getContext("2d"); c.lineJoin = "round"; c.lineCap = "round"; return c; }
+function ell(c, x, y, rx, ry, fill, lw = 7, rot = 0) { c.beginPath(); c.ellipse(x, y, Math.max(1, rx), Math.max(1, ry), rot, 0, Math.PI * 2); if (fill) { c.fillStyle = fill; c.fill(); } if (lw) { c.lineWidth = lw; c.strokeStyle = INK; c.stroke(); } }
+function poly(c, pts, fill, lw = 7) { c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); if (fill) { c.fillStyle = fill; c.fill(); } if (lw) { c.lineWidth = lw; c.strokeStyle = INK; c.stroke(); } }
+function line(c, pts, w = 6, col = INK) { c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.lineWidth = w; c.strokeStyle = col; c.stroke(); }
+function grad(c, x, y, r, a, b) { const g = c.createRadialGradient(x - r * 0.35, y - r * 0.45, r * 0.1, x, y, r * 1.1); g.addColorStop(0, a); g.addColorStop(1, b); return g; }
+function lin(c, y0, y1, a, b) { const g = c.createLinearGradient(0, y0, 0, y1); g.addColorStop(0, a); g.addColorStop(1, b); return g; }
+function shade(hex, k) { const n = parseInt(hex.slice(1), 16); const r = Math.min(255, Math.round(((n >> 16) & 255) * k)), g = Math.min(255, Math.round(((n >> 8) & 255) * k)), b = Math.min(255, Math.round((n & 255) * k)); return `rgb(${r},${g},${b})`; }
+
+// studio backdrop: warm key light pool + cool rim, a soft floor shadow
+function studio(c, w, h, key = "#ffb85c", rim = "#6ab8ff") {
+  c.fillStyle = lin(c, 0, h, "#1a1c2c", "#0e0f19"); c.fillRect(0, 0, w, h);
+  let g = c.createRadialGradient(w * 0.5, h * 0.32, 10, w * 0.5, h * 0.4, h * 0.62); g.addColorStop(0, key + "55"); g.addColorStop(1, "transparent"); c.fillStyle = g; c.fillRect(0, 0, w, h);
+  g = c.createRadialGradient(w * 0.92, h * 0.15, 5, w * 0.92, h * 0.2, h * 0.5); g.addColorStop(0, rim + "40"); g.addColorStop(1, "transparent"); c.fillStyle = g; c.fillRect(0, 0, w, h);
+  g = c.createRadialGradient(w * 0.5, h * 0.93, 5, w * 0.5, h * 0.93, w * 0.42); g.addColorStop(0, "#ffd9a055"); g.addColorStop(1, "transparent"); c.fillStyle = g; c.fillRect(0, h * 0.75, w, h * 0.25);
+  ell(c, w * 0.5, h * 0.94, w * 0.26, 14, "rgba(0,0,0,0.45)", 0);
+  for (let i = 0; i < 26; i++) { const x = (i * 97) % w, y = (i * 53) % (h * 0.8); c.fillStyle = `rgba(255,220,170,${0.05 + (i % 4) * 0.03})`; c.beginPath(); c.arc(x, y, 1 + (i % 3), 0, 7); c.fill(); } // dust motes
+}
+// common human body: legs, outfit torso with gradient + highlight, arms with ink-dot hands
+function body(c, o) {
+  const { cx = 180, top = 250, w = 112, h = 130, shirt = "#2f7fd0", pants = "#2f3f6e", shoes = INK, arm = "hang", prop } = o;
+  // legs
+  for (const s of [-1, 1]) { line(c, [[cx + s * 20, top + h - 10], [cx + s * 24, top + h + 72]], 11, INK); line(c, [[cx + s * 20, top + h - 10], [cx + s * 24, top + h + 72]], 6, shade(pants, 0.9)); ell(c, cx + s * 30, top + h + 76, 17, 9, shoes, 5); }
+  // arms behind
+  const sh = (s) => [cx + s * w * 0.42, top + 26];
+  const arms = { hang: (s) => [sh(s), [cx + s * (w * 0.6), top + 70], [cx + s * (w * 0.56), top + 118]],
+    wave: (s) => (s > 0 ? [sh(s), [cx + w * 0.75, top - 10], [cx + w * 0.7, top - 60]] : arms.hang(s)),
+    point: (s) => (s > 0 ? [sh(s), [cx + w * 0.8, top + 18], [cx + w * 1.05, top + 2]] : arms.hang(s)),
+    hips: (s) => [sh(s), [cx + s * w * 0.78, top + 50], [cx + s * w * 0.42, top + 88]] };
+  const A = arms[arm] || arms.hang;
+  for (const s of [-1, 1]) { const p = A(s); line(c, p, 12, INK); line(c, p, 6, shade(shirt, 0.75)); c.fillStyle = INK; c.beginPath(); c.arc(p[2][0], p[2][1], 8, 0, 7); c.fill(); }
+  // torso
+  c.save(); c.beginPath(); c.ellipse(cx, top + h * 0.5, w * 0.5, h * 0.52, 0, 0, Math.PI * 2); c.fillStyle = lin(c, top, top + h, shade(shirt, 1.18), shade(shirt, 0.72)); c.fill();
+  c.clip(); c.fillStyle = "rgba(255,255,255,0.16)"; c.beginPath(); c.ellipse(cx - w * 0.2, top + h * 0.32, w * 0.16, h * 0.3, -0.3, 0, 7); c.fill(); if (o.decor) o.decor(c, cx, top, w, h); c.restore();
+  ell(c, cx, top + h * 0.5, w * 0.5, h * 0.52, null, 7);
+  if (prop) prop(c, A(1)[2]);
+}
+// cartoon eyes with brows + lids
+function eyes(c, x, y, gap, r, o = {}) {
+  const { look = 0, brow = "calm", lid = 0, glasses } = o;
+  for (const s of [-1, 1]) {
+    const ex = x + s * gap;
+    ell(c, ex, y, r, r * 1.15, "#ffffff", 5);
+    ell(c, ex + look * r * 0.35, y + r * 0.15, r * 0.45, r * 0.52, INK, 0);
+    c.fillStyle = "#fff"; c.beginPath(); c.arc(ex + look * r * 0.35 - r * 0.15, y - r * 0.05, r * 0.16, 0, 7); c.fill();
+    if (lid) { c.save(); c.beginPath(); c.ellipse(ex, y, r, r * 1.15, 0, 0, 7); c.clip(); c.fillStyle = o.lidCol || "#e8d9c2"; c.fillRect(ex - r - 2, y - r * 1.2, r * 2 + 4, r * 2.3 * lid); c.restore(); ell(c, ex, y, r, r * 1.15, null, 5); }
+    const by = y - r * 1.55;
+    if (brow === "angry") line(c, [[ex - s * r * 1.0, by - 6], [ex + s * r * 0.8, by + 7]], 7);
+    else if (brow === "smug") line(c, [[ex - r, by + (s < 0 ? 0 : -6)], [ex + r, by + (s < 0 ? 3 : 0)]], 7);
+    else if (brow === "worry") line(c, [[ex - s * r, by + 6], [ex + s * r * 0.8, by - 6]], 7);
+    else line(c, [[ex - r, by + 3], [ex, by - 4], [ex + r, by + 2]], 7);
+    if (glasses) ell(c, ex, y, r * 1.35, r * 1.35, null, 5);
+  }
+  if (glasses) line(c, [[x - gap + r * 1.35, y], [x + gap - r * 1.35, y]], 5);
+}
+function glow(c, x, y, r, col, a = 0.55) { const g = c.createRadialGradient(x, y, 1, x, y, r); g.addColorStop(0, col); g.addColorStop(1, "transparent"); c.save(); c.globalAlpha = a; c.globalCompositeOperation = "lighter"; c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2); c.restore(); }
+
+// ---------- the 10 characters ----------
+const CAST = [
+  { id: "dino", name: "Dino Topi", tag: "green dino · yellow hoodie · bucket hat", score: 8, line: "\"She found my cousin.\"",
+    hook: "Our current host, upgraded with a bucket hat. Time-travels into each story and reacts.", pro: "Already built and lip-synced. Kid-friendly, a strong silhouette.", con: "Dino mascots are common, so the hat and voice must carry identity.",
+    draw(c) { body(c, { shirt: "#f6c43c", pants: "#57c065", shoes: "#3e9a4c", arm: "wave", decor: (c, cx, t) => { line(c, [[cx - 12, t + 10], [cx - 16, t + 50]], 4); line(c, [[cx + 12, t + 10], [cx + 16, t + 50]], 4); } });
+      for (let k = 0; k < 6; k++) { const a = Math.PI * (1.15 + k * 0.14); poly(c, [[180 + 96 * Math.cos(a) - 14, 165 + 80 * Math.sin(a)], [180 + 126 * Math.cos(a), 165 + 108 * Math.sin(a)], [180 + 96 * Math.cos(a) + 14, 165 + 80 * Math.sin(a)]], "#ff8a3c", 6); }
+      ell(c, 180, 170, 98, 84, grad(c, 180, 170, 98, "#7fe08b", "#3e9a4c")); ell(c, 180, 210, 82, 44, "#8fe39a", 6); ell(c, 162, 196, 5, 4, "#2e7a3a", 0); ell(c, 198, 196, 5, 4, "#2e7a3a", 0);
+      eyes(c, 180, 150, 36, 22, { look: 0.4, lidCol: "#57c065" }); c.beginPath(); c.arc(180, 222, 30, 0.15, Math.PI - 0.15); c.lineWidth = 7; c.strokeStyle = INK; c.stroke();
+      poly(c, [[96, 108], [264, 108], [244, 64], [116, 64]], "#e8622c", 7); ell(c, 180, 108, 104, 16, "#c44a1e", 7); line(c, [[120, 92], [240, 92]], 4, "#ffd37a"); } },
+  { id: "embek", name: "Prof. Embek", tag: "goat head · lab coat · round glasses", score: 9, top: true, line: "\"Mbeeek... the experts were WRONG.\"",
+    hook: "A goat-headed professor who explains the science behind the twist with chalk and a pointer.", pro: "Animal head + human body is instantly funny, a perfect 'smart explainer' voice, the bleat is a built-in sound gag.", con: "Needs a distinct voice; goats must stay cute, not creepy.",
+    draw(c) { body(c, { shirt: "#eef0f4", pants: "#3b3f52", arm: "point", decor: (c, cx, t, w, h) => { line(c, [[cx, t + 4], [cx, t + h]], 4, "#b9bfcc"); poly(c, [[cx - 20, t + 2], [cx, t + 40], [cx + 20, t + 2]], "#c43a2f", 4); } , prop: (c, [x, y]) => { line(c, [[x, y], [x + 46, y - 50]], 6, "#8a5a34"); } });
+      for (const s of [-1, 1]) { line(c, [[180 + s * 50, 108], [180 + s * 92, 64], [180 + s * 116, 80]], 16, INK); line(c, [[180 + s * 50, 108], [180 + s * 92, 64], [180 + s * 116, 80]], 9, "#d8c7a4"); ell(c, 180 + s * 98, 150, 34, 14, "#f2ebe0", 6, s * 0.4); }
+      ell(c, 180, 160, 80, 86, grad(c, 180, 160, 86, "#ffffff", "#d9d2c6")); ell(c, 180, 214, 46, 34, "#efe3d4", 6); ell(c, 168, 210, 5, 4, INK, 0); ell(c, 192, 210, 5, 4, INK, 0);
+      poly(c, [[166, 244], [194, 244], [180, 292]], "#cfc3b0", 6); eyes(c, 180, 150, 32, 17, { glasses: true, brow: "smug", look: 0.5 }); line(c, [[168, 230], [180, 236], [192, 230]], 5); } },
+  { id: "koko", name: "Kapten Koko", tag: "rooster head · trench coat · magnifier", score: 8, line: "\"KUKURUYUUUK! Case closed.\"",
+    hook: "A rooster detective who investigates weird true stories and crows at every reveal.", pro: "Clear role (detective = mystery hook), loud reveal sound, red comb pops on screen.", con: "Crowing must stay short or it gets annoying.",
+    draw(c) { body(c, { shirt: "#b88a52", pants: "#5a4632", arm: "point", decor: (c, cx, t, w, h) => { line(c, [[cx - 6, t], [cx - 20, t + h]], 4, "#7a5a32"); line(c, [[cx - 50, t + h * 0.55], [cx + 50, t + h * 0.55]], 8, "#6b4a2a"); }, prop: (c, [x, y]) => { line(c, [[x, y], [x + 20, y - 22]], 7, "#6b4a2a"); ell(c, x + 30, y - 34, 18, 18, "rgba(170,220,255,0.35)", 6); glow(c, x + 30, y - 34, 40, "#cfefff", 0.5); } });
+      for (let k = 0; k < 4; k++) ell(c, 150 + k * 22, 82 - (k % 2) * 8, 18, 24, "#e8322c", 6);
+      ell(c, 180, 160, 76, 82, grad(c, 180, 160, 82, "#ffffff", "#e4ddd2")); poly(c, [[200, 178], [262, 196], [200, 214]], "#ffb02e", 6); ell(c, 206, 236, 14, 22, "#e8322c", 6);
+      eyes(c, 168, 150, 24, 16, { brow: "angry", look: 0.6 }); ell(c, 180, 100, 0.1, 0.1, null, 0); } },
+  { id: "oyen", name: "Oyen", tag: "orange cat head · hoodie · chaotic", score: 9, top: true, line: "\"Wait... humans did THAT?\"",
+    hook: "An orange cat with gremlin energy who can't believe what humans did. Knocks props off tables.", pro: "Cats are the strongest animal niche worldwide, and 'kucing oren' chaos is a beloved meme in Indonesia. Funny on mute.", con: "Busy niche: the hoodie, voice and catchphrase must be ours.",
+    draw(c) { body(c, { shirt: "#2f3f6e", pants: "#1f2a44", shoes: "#f4f1ea", arm: "hips", decor: (c, cx, t, w, h) => { c.fillStyle = "#ffb85c"; c.font = "700 30px Fredoka"; c.textAlign = "center"; c.fillText("?!", cx, t + h * 0.62); } });
+      for (const s of [-1, 1]) { poly(c, [[180 + s * 30, 104], [180 + s * 86, 58], [180 + s * 84, 128]], "#ff9a3c", 7); poly(c, [[180 + s * 46, 108], [180 + s * 78, 76], [180 + s * 76, 118]], "#ffcfb0", 0); }
+      ell(c, 180, 170, 96, 82, grad(c, 180, 170, 96, "#ffb45c", "#e06a1e")); for (const x of [150, 180, 210]) line(c, [[x, 92], [x + 4, 118]], 6, "#c4561a");
+      ell(c, 180, 208, 50, 30, "#fff2e2", 0); eyes(c, 180, 162, 36, 21, { brow: "smug", look: -0.5, lid: 0.3, lidCol: "#f0852c" });
+      ell(c, 180, 196, 9, 6, "#ff7a9a", 4); line(c, [[164, 214], [180, 208], [196, 214]], 5); for (const s of [-1, 1]) for (const d of [-8, 6]) line(c, [[180 + s * 40, 202 + d], [180 + s * 88, 196 + d * 1.6]], 3); } },
+  { id: "kapi", name: "Kapi", tag: "capybara head · towel · deadpan", score: 7, line: "\"...and that's how a war started. Anyway.\"",
+    hook: "An ultra-calm capybara narrator with a little orange on its head; tells chaotic stories with zero panic.", pro: "Capybara calm is a big internet mood; the deadpan contrast with chaos is the joke.", con: "Low energy can cost retention; needs fast edits around him.",
+    draw(c) { body(c, { shirt: "#7fb7a8", pants: "#4a6a64", arm: "hang" });
+      ell(c, 180, 168, 104, 76, grad(c, 180, 168, 104, "#c79a6a", "#8a6440")); ell(c, 120, 112, 14, 10, "#8a6440", 6); ell(c, 240, 112, 14, 10, "#8a6440", 6);
+      ell(c, 180, 200, 76, 40, "#b88a5c", 6); ell(c, 166, 192, 6, 5, INK, 0); ell(c, 194, 192, 6, 5, INK, 0); line(c, [[168, 218], [192, 218]], 5);
+      eyes(c, 180, 150, 40, 12, { lid: 0.55, lidCol: "#a87c50" }); ell(c, 180, 96, 26, 24, "#ff9a2e", 6); line(c, [[180, 72], [188, 62]], 5, "#3e9a4c"); ell(c, 120, 90, 50, 14, "#f4f1ea", 6, -0.3); } },
+  { id: "bolt", name: "Bolt", tag: "retro robot · CRT screen face · antenna", score: 8, line: "\"ERROR: humans are ridiculous.\"",
+    hook: "A small retro robot whose face is a glowing screen with pixel expressions; reads history like data.", pro: "The screen glows (perfect for our look), expressions are trivial to animate, lip-sync is a waveform. Works for every topic.", con: "Robots feel colder; needs a warm, funny voice.",
+    draw(c) { body(c, { shirt: "#c9ced8", pants: "#7d8592", arm: "wave", decor: (c, cx, t, w, h) => { ell(c, cx, t + h * 0.45, 16, 16, "#ff5a3c", 4); glow(c, cx, t + h * 0.45, 30, "#ff8a5c", 0.6); for (let k = 0; k < 3; k++) line(c, [[cx - 30, t + h * 0.7 + k * 9], [cx + 30, t + h * 0.7 + k * 9]], 3, "#8a909c"); } });
+      line(c, [[180, 76], [180, 44]], 6); ell(c, 180, 40, 10, 10, "#ff5a3c", 5); glow(c, 180, 40, 34, "#ff8a5c", 0.7);
+      poly(c, [[96, 84], [264, 84], [270, 238], [90, 238]], lin(c, 84, 238, "#d8dde6", "#9aa2b0"), 8);
+      poly(c, [[114, 100], [246, 100], [250, 222], [110, 222]], "#0e2a24", 6); glow(c, 180, 160, 120, "#5affb4", 0.55);
+      c.fillStyle = "#7cfcb4"; for (const [x, y, w, h] of [[136, 136, 18, 30], [206, 136, 18, 30], [146, 188, 68, 10], [140, 180, 10, 10], [210, 180, 10, 10]]) c.fillRect(x, y, w, h);
+      c.fillStyle = "rgba(124,252,180,0.12)"; for (let y = 102; y < 220; y += 6) c.fillRect(112, y, 136, 2); } },
+  { id: "hoot", name: "Mbah Hoot", tag: "owl head · cardigan · monocle", score: 6, line: "\"Back in my day... no, wait, this is worse.\"",
+    hook: "A wise old owl historian who has 'seen it all' and still gasps at the twist.", pro: "Owl = wisdom is universal; the grandpa voice suits history stories.", con: "Owls are a slow, gentle vibe; less 'dopamine' energy.",
+    draw(c) { body(c, { shirt: "#8a5a74", pants: "#4a3f35", arm: "hang", decor: (c, cx, t, w, h) => { for (let k = 0; k < 4; k++) ell(c, cx, t + 30 + k * 24, 4, 4, "#e8c45a", 2); } });
+      for (const s of [-1, 1]) poly(c, [[180 + s * 40, 96], [180 + s * 86, 62], [180 + s * 78, 116]], "#7a5a3a", 7);
+      ell(c, 180, 168, 98, 92, grad(c, 180, 168, 98, "#b8916a", "#7a5a3a")); ell(c, 180, 172, 86, 70, "#e8d3b0", 6);
+      for (const s of [-1, 1]) ell(c, 180 + s * 38, 158, 34, 34, "#f6efe0", 6);
+      eyes(c, 180, 160, 38, 18, { look: 0.2 }); ell(c, 218, 160, 26, 26, null, 5); line(c, [[244, 160], [256, 230]], 3, "#e8c45a");
+      poly(c, [[170, 186], [190, 186], [180, 212]], "#ffb02e", 6); } },
+  { id: "zib", name: "Zibzib", tag: "glowing alien tourist · camera", score: 7, line: "\"Earthlings! Explain this. Immediately.\"",
+    hook: "A tiny alien tourist documenting human history for its home planet; the outsider asks the obvious question.", pro: "The outsider lens makes every fact sound absurd; the glow suits our look; works in any era.", con: "Alien designs are common; the camera and catchphrase must define it.",
+    draw(c) { body(c, { shirt: "#3a2f6e", pants: "#241f46", arm: "point", decor: (c, cx, t, w, h) => { poly(c, [[cx - 26, t + 40], [cx + 26, t + 40], [cx + 26, t + 74], [cx - 26, t + 74]], "#2a2a33", 4); ell(c, cx, t + 57, 11, 11, "#6ab8ff", 3); glow(c, cx, t + 57, 26, "#9ad0ff", 0.6); } });
+      for (const s of [-1, 1]) { line(c, [[180 + s * 30, 90], [180 + s * 56, 44]], 6); ell(c, 180 + s * 58, 40, 10, 10, "#7cfc9a", 5); glow(c, 180 + s * 58, 40, 30, "#a8ffbe", 0.7); }
+      ell(c, 180, 168, 90, 96, grad(c, 180, 168, 96, "#9affb4", "#2fa86a")); glow(c, 180, 168, 140, "#7cfc9a", 0.25);
+      for (const s of [-1, 1]) ell(c, 180 + s * 36, 166, 30, 40, INK, 5, s * 0.35); for (const s of [-1, 1]) ell(c, 180 + s * 30, 150, 8, 10, "#ffffff", 0);
+      c.beginPath(); c.arc(180, 222, 14, 0, Math.PI); c.lineWidth = 6; c.strokeStyle = INK; c.stroke(); } },
+  { id: "momo", name: "Momo", tag: "tiny woolly mammoth · scarf · time traveller", score: 7, line: "\"I've been frozen 10,000 years and THIS is new?\"",
+    hook: "A baby mammoth thawed out in the present day, shocked by human history.", pro: "Fluffy, cute, a natural time-travel angle; the trunk gives big physical comedy.", con: "Mammoth anatomy is harder to draw on a human body.",
+    draw(c) { body(c, { shirt: "#c4553a", pants: "#6b4a2f", arm: "wave", decor: (c, cx, t, w) => { line(c, [[cx - w * 0.45, t + 10], [cx + w * 0.45, t + 16]], 16, "#2f7fd0"); line(c, [[cx + 30, t + 16], [cx + 40, t + 70]], 14, "#2f7fd0"); } });
+      for (const s of [-1, 1]) ell(c, 180 + s * 92, 172, 40, 56, "#8a5a3a", 7);
+      ell(c, 180, 160, 92, 86, grad(c, 180, 160, 92, "#b07a52", "#6b4a2f")); for (let k = 0; k < 9; k++) line(c, [[110 + k * 18, 86 + (k % 2) * 6], [116 + k * 18, 104]], 5, "#5a3b22");
+      for (const s of [-1, 1]) { c.beginPath(); c.moveTo(180 + s * 30, 220); c.quadraticCurveTo(180 + s * 70, 260, 180 + s * 40, 286); c.lineWidth = 15; c.strokeStyle = INK; c.stroke(); c.lineWidth = 9; c.strokeStyle = "#fff6e0"; c.stroke(); }
+      c.beginPath(); c.moveTo(180, 196); c.quadraticCurveTo(176, 260, 214, 284); c.lineWidth = 28; c.strokeStyle = INK; c.stroke(); c.lineWidth = 20; c.strokeStyle = "#8a5a3a"; c.stroke();
+      eyes(c, 180, 158, 32, 17, { brow: "worry", look: 0.3 }); } },
+  { id: "sandalini", name: "Sandalini Hiuto", tag: "our brainrot creature · shark head · flip-flops", score: 6, line: "\"Sandalini Hiuto, tuturu-tutu!\"",
+    hook: "Our own absurd shark-in-flip-flops creature with a nonsense chant intro, riding the brainrot humour wave.", pro: "Absurd = shareable with Gen Z/Alpha; a chant intro is very memorable.", con: "Brainrot trends burn out fast and are hard to keep 'smart'; high risk.",
+    draw(c) { body(c, { shirt: "#f4f1ea", pants: "#e8622c", shoes: "#2f7fd0", arm: "wave", decor: (c, cx, t, w, h) => { for (let k = 0; k < 5; k++) ell(c, cx - 36 + k * 18, t + 40 + (k % 2) * 30, 7, 7, "#ffd23c", 0); } });
+      poly(c, [[180, 52], [212, 104], [150, 104]], "#5a8fc2", 7);
+      ell(c, 180, 168, 104, 82, grad(c, 180, 168, 104, "#8fc0ec", "#3f6fa8")); ell(c, 180, 200, 82, 38, "#f2f6fa", 6);
+      c.fillStyle = "#ffffff"; for (let k = 0; k < 8; k++) poly(c, [[118 + k * 16, 196], [126 + k * 16, 214], [134 + k * 16, 196]], "#ffffff", 3);
+      eyes(c, 180, 146, 46, 15, { brow: "angry", look: -0.2 }); for (const s of [-1, 1]) for (let k = 0; k < 3; k++) line(c, [[180 + s * (76 + k * 6), 160], [180 + s * (80 + k * 6), 178]], 4); } },
+];
+
+function renderCard(ch) {
+  const cv = document.createElement("canvas"); cv.width = 720; cv.height = 880;
+  const c = ctxOf(cv); c.scale(2, 2);
+  studio(c, 360, 440, ch.id === "zib" || ch.id === "bolt" ? "#7cfc9a" : "#ffb85c");
+  c.save(); c.translate(0, 18); ch.draw(c); c.restore();
+  // rim light pass on the right edge
+  const g = c.createLinearGradient(240, 0, 360, 0); g.addColorStop(0, "transparent"); g.addColorStop(1, "rgba(106,184,255,0.10)"); c.fillStyle = g; c.fillRect(0, 0, 360, 440);
+  const el = document.createElement("article"); el.className = "card";
+  el.innerHTML = `<div class="meta"><div class="row"><span class="name">${ch.name}</span><span class="pill ${ch.top ? "top" : ""}">viral fit ${ch.score}/10${ch.top ? " · top pick" : ""}</span></div><span class="tag">${ch.tag}</span><span class="line">${ch.line}</span><span class="hook">${ch.hook}</span><div class="pc"><span><b>Why it can work:</b> ${ch.pro}</span><span><b>Risk:</b> ${ch.con}</span></div></div>`;
+  el.prepend(cv);
+  return el;
+}
+const castEl = document.getElementById("cast");
+document.fonts.ready.then(() => CAST.forEach((ch) => castEl.appendChild(renderCard(ch))));
+
+// ---------- the 6 looks: one scene, six treatments ----------
+function scene(c, w, h, mode) {
+  // room: wall, floor, window with moon, lamp, rug, host silhouette (Oyen-like)
+  const night = mode !== "paper" && mode !== "clay";
+  c.fillStyle = night ? lin(c, 0, h * 0.62, "#2a2f5e", "#1c1f3e") : lin(c, 0, h * 0.62, "#f3e3c4", "#e8d2a8"); c.fillRect(0, 0, w, h * 0.62);
+  for (let x = 0; x < w; x += 18) { c.fillStyle = night ? "rgba(255,255,255,0.03)" : "rgba(120,80,40,0.06)"; c.fillRect(x, 0, 8, h * 0.62); }
+  c.fillStyle = night ? lin(c, h * 0.62, h, "#3a2a2a", "#1e1418") : lin(c, h * 0.62, h, "#c98a5a", "#a86a3e"); c.fillRect(0, h * 0.62, w, h * 0.38);
+  // window + moon
+  poly(c, [[34, 46], [124, 46], [124, 146], [34, 146]], night ? "#14183a" : "#9fd2f5", 6); if (night) { ell(c, 98, 80, 16, 16, "#fff4c8", 0); glow(c, 98, 80, 60, "#cfe0ff", 0.5); } else ell(c, 98, 80, 18, 18, "#fff1a8", 0);
+  line(c, [[79, 46], [79, 146]], 5); line(c, [[34, 96], [124, 96]], 5);
+  // rug
+  ell(c, 190, h * 0.85, 120, 30, night ? "#7a2f3e" : "#c4553a", 6); ell(c, 190, h * 0.85, 96, 22, null, 3);
+  // lamp + light pool
+  line(c, [[300, 120], [300, 236]], 6); poly(c, [[276, 92], [324, 92], [336, 124], [264, 124]], "#ffcf7a", 6); line(c, [[284, 238], [316, 238]], 6);
+  if (night) { const g = c.createRadialGradient(300, 140, 5, 300, 210, 170); g.addColorStop(0, "rgba(255,190,110,0.55)"); g.addColorStop(1, "transparent"); c.save(); c.globalCompositeOperation = "lighter"; c.fillStyle = g; c.fillRect(0, 0, w, h); c.restore(); }
+  // host (simplified Oyen)
+  const cx = 180, cy = 168;
+  line(c, [[cx - 12, cy + 70], [cx - 14, cy + 112]], 9); line(c, [[cx + 12, cy + 70], [cx + 14, cy + 112]], 9);
+  ell(c, cx, cy + 48, 34, 40, night ? lin(c, cy, cy + 90, "#3f55a0", "#1f2a5a") : "#2f3f6e", 6);
+  for (const s of [-1, 1]) poly(c, [[cx + s * 12, cy - 30], [cx + s * 38, cy - 56], [cx + s * 36, cy - 18]], "#ff9a3c", 6);
+  ell(c, cx, cy - 6, 44, 38, night ? grad(c, cx, cy - 6, 44, "#ffc06a", "#c4561a") : "#ff9a3c", 6);
+  for (const s of [-1, 1]) { ell(c, cx + s * 16, cy - 10, 9, 10, "#fff", 4); ell(c, cx + s * 16 + 2, cy - 8, 4, 5, INK, 0); }
+  if (night) glow(c, cx + 30, cy - 10, 60, "#ffb85c", 0.35);
+}
+function pixelate(src, px) { const s = document.createElement("canvas"); s.width = Math.ceil(src.width / px); s.height = Math.ceil(src.height / px); const sc = s.getContext("2d"); sc.imageSmoothingEnabled = false; sc.drawImage(src, 0, 0, s.width, s.height);
+  const o = document.createElement("canvas"); o.width = src.width; o.height = src.height; const oc = o.getContext("2d"); oc.imageSmoothingEnabled = false; oc.drawImage(s, 0, 0, o.width, o.height); return o; }
+const LOOKS = [
+  { name: "1 · Glow Toon (recommended)", note: "Night vs warm lamp contrast, bloom, gradient shading, rim light, dust in the light. Matches your sample; calm colours, rich mood.", mode: "glow" },
+  { name: "2 · Pixel HD", note: "The 3D scene rendered then pixelated with crisp pixels. Very distinctive retro-game feel; small details turn into readable pixel clusters.", mode: "pixel" },
+  { name: "3 · Paper Diorama", note: "Cut-paper layers with soft drop shadows and grain, like a lit shoebox stage. Cosy and handmade; daylight friendly.", mode: "paper" },
+  { name: "4 · Clay Studio", note: "Soft plasticine shapes with round highlights. Warm and tactile; costs more render time for good shading.", mode: "clay" },
+  { name: "5 · Comic Halftone", note: "Bold ink plus Ben-Day dots in the shadows, like a printed comic. Punchy, great for impact frames.", mode: "comic" },
+  { name: "6 · Neon Night", note: "Dark scene, everything outlined in glowing light. Very aesthetic, but tiring for a full minute; best for one scene.", mode: "neon" },
+];
+function renderLook(L) {
+  const cv = document.createElement("canvas"); cv.width = 720; cv.height = 600; const c = ctxOf(cv); c.scale(2, 2);
+  scene(c, 360, 300, L.mode);
+  if (L.mode === "glow") { const g = c.createRadialGradient(180, 150, 80, 180, 150, 260); g.addColorStop(0, "transparent"); g.addColorStop(1, "rgba(0,0,0,0.45)"); c.fillStyle = g; c.fillRect(0, 0, 360, 300); for (let i = 0; i < 30; i++) { c.fillStyle = `rgba(255,210,150,${0.08 + (i % 3) * 0.05})`; c.beginPath(); c.arc(240 + (i * 37) % 110, 100 + (i * 23) % 140, 1 + (i % 2), 0, 7); c.fill(); } }
+  if (L.mode === "paper") { c.save(); c.globalCompositeOperation = "multiply"; for (let i = 0; i < 4000; i++) { c.fillStyle = `rgba(120,90,60,${0.03 + (i % 5) * 0.01})`; c.fillRect((i * 73) % 360, (i * 131) % 300, 1, 1); } c.restore(); c.save(); c.shadowColor = "rgba(0,0,0,0.35)"; c.shadowBlur = 10; c.shadowOffsetY = 6; ell(c, 180, 255, 120, 30, null, 0); c.restore(); }
+  if (L.mode === "clay") { c.save(); c.globalCompositeOperation = "screen"; for (const [x, y, r] of [[170, 150, 14], [176, 205, 10], [300, 100, 8]]) { const g = c.createRadialGradient(x, y, 1, x, y, r * 2); g.addColorStop(0, "rgba(255,255,255,0.7)"); g.addColorStop(1, "transparent"); c.fillStyle = g; c.fillRect(x - r * 2, y - r * 2, r * 4, r * 4); } c.restore(); }
+  if (L.mode === "comic") { c.save(); c.globalCompositeOperation = "multiply"; for (let y = 0; y < 300; y += 7) for (let x = (y / 7) % 2 ? 3.5 : 0; x < 360; x += 7) { const d = Math.hypot(x - 300, y - 150) / 260; c.fillStyle = "rgba(20,20,60,0.5)"; c.beginPath(); c.arc(x, y, Math.min(2.8, d * 3), 0, 7); c.fill(); } c.restore(); }
+  if (L.mode === "neon") { const d = c.getImageData(0, 0, 720, 600); for (let i = 0; i < d.data.length; i += 4) { d.data[i] *= 0.35; d.data[i + 1] *= 0.3; d.data[i + 2] *= 0.55; } c.putImageData(d, 0, 0); c.save(); c.shadowColor = "#ff5ad8"; c.shadowBlur = 18; c.lineWidth = 3; c.strokeStyle = "#ff8ae8"; c.strokeRect(34, 46, 90, 100); c.beginPath(); c.ellipse(180, 162, 44, 38, 0, 0, 7); c.stroke(); c.shadowColor = "#5af0ff"; c.strokeStyle = "#8af6ff"; c.beginPath(); c.ellipse(190, 255, 120, 30, 0, 0, 7); c.stroke(); c.strokeRect(264, 92, 72, 32); c.restore(); }
+  const out = L.mode === "pixel" ? pixelate(cv, 9) : cv;
+  const el = document.createElement("article"); el.className = "card look";
+  el.innerHTML = `<div class="meta"><span class="name">${L.name}</span><span class="hook">${L.note}</span></div>`;
+  out.style.width = "100%"; out.style.height = "auto"; el.prepend(out); return el;
+}
+const looksEl = document.getElementById("looks");
+LOOKS.forEach((L) => looksEl.appendChild(renderLook(L)));
+</script>
